@@ -1,7 +1,7 @@
 from utils.imports import ReinforcementData
 from utils.plots import Plotter
 
-asf_path = 'examples/example_1/example_1_reinforement.asf'
+asf_path = 'examples/example_1/example_1_reinforcement.asf'
 reinforcement = ReinforcementData()
 reinforcement.import_asf(asf_path)
 

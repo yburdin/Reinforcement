@@ -1,7 +1,9 @@
 from utils.imports import ReinforcementData
+from structures.reinforcement_scheme import ReinforcementScheme
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import pandas as pd
 import numpy as np
 from matplotlib import cm
 
@@ -62,7 +64,7 @@ class Plotter:
         fig = plt.figure()
         ax = fig.add_subplot()
 
-        fig.suptitle(reinforcement_loc)
+        fig.suptitle(reinforcement_loc.replace("_", " "))
 
         v_min = max(reinforcement.reinforcement_table.loc[:, reinforcement_loc].min(), min_value)
         v_max = reinforcement.reinforcement_table.loc[:, reinforcement_loc].max()
@@ -97,3 +99,30 @@ class Plotter:
                                    )
         fig.colorbar(sm, ticks=np.linspace(v_min, v_max, 9), format='%.3g')
         plt.show()
+
+    def plot_reinforcement_zones_2d(self, scheme: ReinforcementScheme, reinforcement_loc: str):
+        fig = plt.figure()
+        ax = fig.add_subplot()
+
+        fig.suptitle(f'Zones {reinforcement_loc.replace("_", " ")}')
+
+        self.add_mesh_to_ax_2d(ax, scheme.reinforcement_data.nodes_table, scheme.reinforcement_data.elements_table)
+
+        for zone in scheme.reinforcement_zones[reinforcement_loc]:
+            zone_nodes = scheme.reinforcement_data.nodes_table.loc[zone.nodes]
+            min_x, min_y = zone_nodes.loc[:, ['X', 'Y']].min()
+            max_x, max_y = zone_nodes.loc[:, ['X', 'Y']].max()
+
+            ax.plot([min_x, min_x, max_x, max_x, min_x], [min_y, max_y, max_y, min_y, min_y], c='xkcd:red', lw=3)
+
+    @staticmethod
+    def add_mesh_to_ax_2d(ax, nodes_table: pd.DataFrame, elements_table: pd.DataFrame):
+        for element in elements_table.index:
+            element_nodes = elements_table.loc[element, 'Nodes']
+            xs = nodes_table.loc[element_nodes, 'X'].values
+            ys = nodes_table.loc[element_nodes, 'Y'].values
+
+            xs = np.append(xs, xs[0])
+            ys = np.append(ys, ys[0])
+
+            ax.plot(xs, ys, c='xkcd:grey')

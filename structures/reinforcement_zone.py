@@ -12,4 +12,4 @@ class ReinforcementZone:
 
         for node in nodes:
             if node not in self.nodes:
-                self.nodes.append(nodes)
+                self.nodes.append(node)

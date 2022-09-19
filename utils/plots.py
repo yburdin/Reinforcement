@@ -43,7 +43,7 @@ class Plotter:
 
             ax.plot(xs, ys, zs, c='xkcd:grey')
 
-            reinforcement_con = reinforcement.reinforcement_table.loc[:, 'Element index'] == element
+            reinforcement_con = reinforcement.reinforcement_table.Element_index == element
             reinforcement_value = reinforcement.reinforcement_table.loc[reinforcement_con, reinforcement_loc].iloc[0]
 
             vertices = [list(zip(xs, ys, zs))]
@@ -55,6 +55,7 @@ class Plotter:
                                                       vmax=v_max)
                                    )
         fig.colorbar(sm, ticks=np.linspace(v_min, v_max, 9), format='%.3g')
+        plt.show()
 
     @staticmethod
     def plot_reinforcement_2d(reinforcement: ReinforcementData, reinforcement_loc: str, min_value=0):
@@ -80,7 +81,7 @@ class Plotter:
 
             ax.plot(xs, ys, c='xkcd:grey')
 
-            reinforcement_con = reinforcement.reinforcement_table.loc[:, 'Element index'] == element
+            reinforcement_con = reinforcement.reinforcement_table.Element_index == element
             reinforcement_value = reinforcement.reinforcement_table.loc[reinforcement_con, reinforcement_loc].iloc[0]
 
             if reinforcement_value < min_value:
@@ -95,3 +96,4 @@ class Plotter:
                                                       vmax=v_max)
                                    )
         fig.colorbar(sm, ticks=np.linspace(v_min, v_max, 9), format='%.3g')
+        plt.show()

@@ -5,8 +5,8 @@ class ReinforcementData:
     def __init__(self):
         self.nodes_table = pd.DataFrame(columns=('X', 'Y', 'Z'))
         self.elements_table = pd.Series(name='Nodes', dtype=object)
-        self.reinforcement_table = pd.DataFrame(columns=('Element center X', 'Element center Y', 'Element center Z',
-                                                         'Top X', 'Top Y', 'Lat X', 'Bot X', 'Bot Y', 'Lat Y'))
+        self.reinforcement_table = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',
+                                                         'Top_X', 'Top_Y', 'Lat_X', 'Bot_X', 'Bot_Y', 'Lat_Y'))
 
     def import_asf(self, path: str) -> None:
         with open(path) as f:
@@ -50,7 +50,7 @@ class ReinforcementData:
         self.reinforcement_table.loc[len(self.reinforcement_table)] = [float(item) for item in (split_line[3:12])]
 
     def calculate_element_centers(self):
-        elements_centers = pd.DataFrame(columns=('Element center X', 'Element center Y', 'Element center Z'))
+        elements_centers = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z'))
 
         for i in self.elements_table.index:
             element_nodes = self.elements_table.loc[i]
@@ -72,15 +72,15 @@ class ReinforcementData:
 
     def compare_tables(self):
         for element in self.elements_table.index:
-            element_center = self.elements_table.loc[element, ['Element center X',
-                                                               'Element center Y',
-                                                               'Element center Z']].values
+            element_center = self.elements_table.loc[element, ['Element_center_X',
+                                                               'Element_center_Y',
+                                                               'Element_center_Z']].values
 
-            x_con = abs(self.reinforcement_table.loc[:, 'Element center X'] - element_center[0]) < 1e-3
-            y_con = abs(self.reinforcement_table.loc[:, 'Element center Y'] - element_center[1]) < 1e-3
-            z_con = abs(self.reinforcement_table.loc[:, 'Element center Z'] - element_center[2]) < 1e-3
+            x_con = abs(self.reinforcement_table.loc[:, 'Element_center_X'] - element_center[0]) < 1e-3
+            y_con = abs(self.reinforcement_table.loc[:, 'Element_center_Y'] - element_center[1]) < 1e-3
+            z_con = abs(self.reinforcement_table.loc[:, 'Element_center_Z'] - element_center[2]) < 1e-3
 
             reinforcement_index = self.reinforcement_table.loc[x_con & y_con & z_con].iloc[0].name
 
-            self.elements_table.loc[element, 'Reinforcement index'] = reinforcement_index
-            self.reinforcement_table.loc[reinforcement_index, 'Element index'] = element
+            self.elements_table.loc[element, 'Reinforcement_index'] = reinforcement_index
+            self.reinforcement_table.loc[reinforcement_index, 'Element_index'] = element

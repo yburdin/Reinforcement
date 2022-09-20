@@ -4,7 +4,7 @@ from structures.reinforcement_scheme import ReinforcementScheme
 
 
 if __name__ == '__main__':
-    asf_path = 'examples/example_1/example_1_reinforcement.asf'
+    asf_path = 'examples/example_2/example_2_reinforcement.asf'
     reinforcement = ReinforcementData()
     reinforcement.import_asf(asf_path)
 

@@ -1,4 +1,5 @@
 import pandas as pd
+from utils.decorators import Decorators
 
 
 class ReinforcementData:
@@ -8,6 +9,7 @@ class ReinforcementData:
         self.reinforcement_table = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',
                                                          'Top_X', 'Top_Y', 'Lat_X', 'Bot_X', 'Bot_Y', 'Lat_Y'))
 
+    @Decorators.timed
     def import_asf(self, path: str) -> None:
         with open(path) as f:
             data = f.read().split('\n')

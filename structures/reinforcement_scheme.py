@@ -1,8 +1,10 @@
 from utils.imports import ReinforcementData
 from reinforcement_zone import ReinforcementZone
+from utils.decorators import Decorators
 from typing import List
 from numpy import intersect1d
 import pandas as pd
+import numpy as np
 
 
 class ReinforcementScheme:
@@ -16,9 +18,11 @@ class ReinforcementScheme:
                                     'Lat_Y': [],
                                     }
 
+    @Decorators.timed
     def load_reinforcement_data(self, reinforcement_data: ReinforcementData):
         self.reinforcement_data = reinforcement_data
 
+    @Decorators.timed
     def find_reinforcement_zones(self, location, min_value=0):
         assert self.reinforcement_data, 'No reinforcement data'
 
@@ -30,32 +34,32 @@ class ReinforcementScheme:
             first_element_nodes = self.reinforcement_data.elements_table.loc[first_element].Nodes
 
             zone = ReinforcementZone()
-            zone.add_to_zone(first_element, first_element_nodes)
+            zone.add_one_element_to_zone(first_element, first_element_nodes)
 
             while True:
                 next_elements = self.find_elements_with_nodes(self.reinforcement_data.elements_table, zone.nodes)
                 next_elements = intersect1d(next_elements, reinforced_elements_indices)
 
                 if len(next_elements) > 0:
-                    for element in next_elements:
-                        element = int(element)
-                        nodes = self.reinforcement_data.elements_table.loc[element].Nodes
-                        zone.add_to_zone(element, nodes)
-                        reinforced_elements_indices.remove(element)
+                    nodes = np.stack(self.reinforcement_data.elements_table.loc[next_elements].Nodes.values).flatten()
+                    zone.add_multiple_elements_to_zone(next_elements, nodes)
+                    reinforced_elements_indices = [element for element in reinforced_elements_indices
+                                                   if element not in next_elements]
                 else:
                     break
 
             self.reinforcement_zones[location].append(zone)
 
     @staticmethod
-    def find_elements_with_nodes(elements_table: pd.DataFrame, nodes: List[int]) -> List[int]:
+    @Decorators.timed
+    def find_elements_with_nodes(elements_table: pd.DataFrame, nodes_to_find: List[int]) -> List[int]:
         result_elements = []
 
-        for element in elements_table.index:
-            element_nodes = elements_table.loc[element].Nodes
-            if len(intersect1d(element_nodes, nodes)) > 0:
-                result_elements.append(element)
+        nodes = np.stack(elements_table.Nodes.values)
+        search_result = [np.where(nodes == node)[0] for node in nodes_to_find]
+        for item in search_result:
+            result_elements += elements_table.iloc[item].index.tolist()
+
+        result_elements = list(np.unique(result_elements))
 
         return result_elements
-
-

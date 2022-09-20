@@ -86,7 +86,7 @@ class Plotter:
             reinforcement_con = reinforcement.reinforcement_table.Element_index == element
             reinforcement_value = reinforcement.reinforcement_table.loc[reinforcement_con, reinforcement_loc].iloc[0]
 
-            if reinforcement_value < min_value:
+            if reinforcement_value <= min_value:
                 face_color = (1, 1, 1, 1)
             else:
                 face_color = cm.rainbow((reinforcement_value - v_min) / (v_max - v_min))

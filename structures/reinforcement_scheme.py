@@ -1,5 +1,6 @@
-from utils.imports import ReinforcementData
+from utils.reinforcement_data import ReinforcementData
 from reinforcement_zone import ReinforcementZone
+from scad_data import SCADData
 from utils.decorators import Decorators
 from typing import List
 from numpy import intersect1d
@@ -17,6 +18,7 @@ class ReinforcementScheme:
                                     'Lat_X': [],
                                     'Lat_Y': [],
                                     }
+        self.scad_data = None
 
     @Decorators.timed
     def load_reinforcement_data(self, reinforcement_data: ReinforcementData):
@@ -63,3 +65,6 @@ class ReinforcementScheme:
         result_elements = list(np.unique(result_elements))
 
         return result_elements
+
+    def load_scad_data(self, scad_data: SCADData, name: str):
+        self.scad_data = scad_data.elements_table.loc[scad_data.reinforcement_groups[name]].reset_index()

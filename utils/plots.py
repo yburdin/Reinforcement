@@ -1,4 +1,4 @@
-from utils.imports import ReinforcementData
+from utils.reinforcement_data import ReinforcementData
 from structures.reinforcement_scheme import ReinforcementScheme
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -107,6 +107,8 @@ class Plotter:
         fig.suptitle(f'Zones {reinforcement_loc.replace("_", " ")}')
 
         self.add_mesh_to_ax_2d(ax, scheme.reinforcement_data.nodes_table, scheme.reinforcement_data.elements_table)
+        self.add_force_directions_to_ax_2d(ax, scheme.reinforcement_data.reinforcement_table,
+                                           scheme.scad_data)
 
         for zone in scheme.reinforcement_zones[reinforcement_loc]:
             zone_nodes = scheme.reinforcement_data.nodes_table.loc[zone.nodes]
@@ -116,7 +118,7 @@ class Plotter:
             ax.plot([min_x, min_x, max_x, max_x, min_x], [min_y, max_y, max_y, min_y, min_y], c='xkcd:red', lw=3)
 
     @staticmethod
-    def add_mesh_to_ax_2d(ax, nodes_table: pd.DataFrame, elements_table: pd.DataFrame):
+    def add_mesh_to_ax_2d(ax: plt.Axes, nodes_table: pd.DataFrame, elements_table: pd.DataFrame):
         for element in elements_table.index:
             element_nodes = elements_table.loc[element, 'Nodes']
             xs = nodes_table.loc[element_nodes, 'X'].values
@@ -126,3 +128,15 @@ class Plotter:
             ys = np.append(ys, ys[0])
 
             ax.plot(xs, ys, c='xkcd:grey')
+
+    @staticmethod
+    def add_force_directions_to_ax_2d(ax: plt.Axes, elements_table: pd.DataFrame, rotation_table: pd.DataFrame):
+        for element in elements_table.index:
+            x, y = elements_table.loc[element, ['Element_center_X', 'Element_center_Y']]
+            rotation_type, direction = rotation_table.loc[element, ['Rotation_type', 'Direction']]
+
+            if rotation_type == 'EX':
+                dx = direction[0] / max(direction) * 0.1
+                dy = direction[1] / max(direction) * 0.1
+
+            ax.arrow(x, y, dx, dy, width=0.05, head_length=0.1)

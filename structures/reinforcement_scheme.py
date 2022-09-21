@@ -52,6 +52,15 @@ class ReinforcementScheme:
 
             self.reinforcement_zones[location].append(zone)
 
+    def reset_reinforcement_zones(self):
+        self.reinforcement_zones = {'Top_X': [],
+                                    'Top_Y': [],
+                                    'Bot_X': [],
+                                    'Bot_Y': [],
+                                    'Lat_X': [],
+                                    'Lat_Y': [],
+                                    }
+
     @staticmethod
     @Decorators.timed
     def find_elements_with_nodes(elements_table: pd.DataFrame, nodes_to_find: List[int]) -> List[int]:
@@ -67,4 +76,29 @@ class ReinforcementScheme:
         return result_elements
 
     def load_scad_data(self, scad_data: SCADData, name: str):
-        self.scad_data = scad_data.elements_table.loc[scad_data.reinforcement_groups[name]].reset_index()
+        self.scad_data = scad_data.elements_table.loc[scad_data.reinforcement_groups[name]]
+
+        self.scad_data = self.scad_data.reset_index()
+        # self.scad_data.index = range(1, len(self.scad_data) + 1)
+
+    def transfer_reinforcement_direction_to_zones(self):
+        for location in self.reinforcement_zones.keys():
+            for zone in self.reinforcement_zones[location]:
+                zone_elements_indices = self.reinforcement_data.elements_table.loc[zone.elements].Reinforcement_index
+                zone_directions = self.scad_data.loc[zone_elements_indices.astype(int)]
+
+                if (len(np.unique(np.stack(zone_directions.Direction.values), axis=0)) == 1 and
+                        len(zone_directions.Rotation_type.unique()) == 1):
+                    rotation_type = zone_directions.Rotation_type.unique()[0]
+                    direction = np.unique(np.stack(zone_directions.Direction.values), axis=0)[0]
+
+                    if rotation_type == 'EX':
+                        zone.set_reinforcement_direction(*direction)
+
+    @staticmethod
+    def make_rotation_matrix_2d(x, y) -> np.array:
+        tan_alpha = y / (x + 1e-9)
+        alpha = np.arctan(tan_alpha)
+
+        return np.array([[np.cos(alpha), -np.sin(alpha)],
+                         [np.sin(alpha), np.cos(alpha)]])

@@ -20,10 +20,9 @@ if __name__ == '__main__':
 
     plotter = Plotter()
 
-    for loc in ['Top_X',
-                # 'Top_Y', 'Bot_X', 'Bot_Y'
-                ]:
-        plotter.plot_reinforcement_2d(reinforcement, loc, min_value=1.41)
+    for loc in ['Top_X', 'Top_Y', 'Bot_X', 'Bot_Y']:
         reinforcement_scheme.find_reinforcement_zones(loc, min_value=1.41)
         reinforcement_scheme.transfer_reinforcement_direction_to_zones()
+
+        plotter.plot_reinforcement_2d(reinforcement, loc, min_value=1.41)
         plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc)

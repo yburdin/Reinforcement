@@ -138,27 +138,7 @@ class Plotter:
     @staticmethod
     def add_reinforcement_zones_to_ax_2d(ax: plt.Axes, scheme: ReinforcementScheme, reinforcement_loc: str):
         for zone in scheme.reinforcement_zones[reinforcement_loc]:
-            zone_nodes = scheme.reinforcement_data.nodes_table.loc[zone.nodes]
-
-            if all([coordinate == 0 for coordinate in zone.reinforcement_direction]):
-                min_x, min_y = zone_nodes.loc[:, ['X', 'Y']].min()
-                max_x, max_y = zone_nodes.loc[:, ['X', 'Y']].max()
-
-                ax.plot([min_x, min_x, max_x, max_x, min_x], [min_y, max_y, max_y, min_y, min_y], c='xkcd:blue', lw=3)
-            else:
-                rotation_matrix = scheme.make_rotation_matrix_2d(*zone.reinforcement_direction[:2])
-                zone_nodes_coordinates = zone_nodes.loc[:, ['X', 'Y']]
-                local_coordinates = (rotation_matrix @ zone_nodes_coordinates.values.T).T
-
-                min_x_local, min_y_local = local_coordinates[:, 0].min(), local_coordinates[:, 1].min()
-                max_x_local, max_y_local = local_coordinates[:, 0].max(), local_coordinates[:, 1].max()
-
-                points_local = np.array([[min_x_local, min_y_local],
-                                         [min_x_local, max_y_local],
-                                         [max_x_local, max_y_local],
-                                         [max_x_local, min_y_local],
-                                         [min_x_local, min_y_local],
-                                         ])
-                points_global = np.linalg.inv(rotation_matrix) @ points_local.T
-
-                ax.plot(points_global[0], points_global[1], c='xkcd:red', lw=3)
+            if zone.bounding_rectangle is not None:
+                ax.plot(zone.bounding_rectangle[:, 0], zone.bounding_rectangle[:, 1], c='xkcd:red', lw=3)
+                ax.plot([zone.bounding_rectangle[-1, 0], zone.bounding_rectangle[0, 0]],
+                        [zone.bounding_rectangle[-1, 1], zone.bounding_rectangle[0, 1]], c='xkcd:red', lw=3)

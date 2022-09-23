@@ -1,7 +1,8 @@
+from structures.reinforcement_scheme import ReinforcementScheme
 from utils.reinforcement_data import ReinforcementData
 from utils.scad_data import SCADData
 from utils.plots import Plotter
-from structures.reinforcement_scheme import ReinforcementScheme
+from utils.drawings import Drawer
 
 
 if __name__ == '__main__':
@@ -26,3 +27,6 @@ if __name__ == '__main__':
 
         plotter.plot_reinforcement_2d(reinforcement, loc, min_value=1.41)
         plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc)
+
+    drawer = Drawer()
+    drawer.dxf_draw_zones(reinforcement_scheme, f'examples/{example_name}/{example_name}.dxf')

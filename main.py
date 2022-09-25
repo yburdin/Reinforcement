@@ -22,11 +22,13 @@ if __name__ == '__main__':
     plotter = Plotter()
 
     for loc in ['Top_X', 'Top_Y', 'Bot_X', 'Bot_Y']:
-        reinforcement_scheme.find_reinforcement_zones(loc, min_value=1.41)
+        reinforcement_scheme.find_reinforcement_zones(loc)
         reinforcement_scheme.transfer_reinforcement_direction_to_zones()
+        reinforcement_scheme.set_zones_reinforcement()
 
-        plotter.plot_reinforcement_2d(reinforcement, loc, min_value=1.41)
-        plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc)
+        # plotter.plot_reinforcement_2d(reinforcement, loc,
+        #                               min_value=reinforcement_scheme.background_reinforcement_intensity)
+        # plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc)
 
     drawer = Drawer()
     drawer.dxf_draw_zones(reinforcement_scheme, f'examples/{example_name}/{example_name}.dxf')

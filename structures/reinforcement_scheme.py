@@ -1,6 +1,7 @@
+from utils.reinforcement_calculator import ReinforcementCalculator
+from structures.reinforcement_zone import ReinforcementZone
 from utils.reinforcement_data import ReinforcementData
-from reinforcement_zone import ReinforcementZone
-from scad_data import SCADData
+from utils.scad_data import SCADData
 from utils.decorators import Decorators
 from typing import List
 from numpy import intersect1d
@@ -10,6 +11,7 @@ import numpy as np
 
 class ReinforcementScheme:
     def __init__(self):
+        self.calculator = ReinforcementCalculator()
         self.reinforcement_data = None
         self.reinforcement_zones = {'Top_X': [],
                                     'Top_Y': [],
@@ -19,14 +21,20 @@ class ReinforcementScheme:
                                     'Lat_Y': [],
                                     }
         self.scad_data = None
+        self.background_reinforcement = {'diameter': 0,
+                                         'step': 0}
 
     @Decorators.timed
     def load_reinforcement_data(self, reinforcement_data: ReinforcementData):
         self.reinforcement_data = reinforcement_data
+        self.set_background_reinforcement(reinforcement_data)
 
     @Decorators.timed
-    def find_reinforcement_zones(self, location, min_value=0):
+    def find_reinforcement_zones(self, location, min_value=None):
         assert self.reinforcement_data, 'No reinforcement data'
+
+        if min_value is None:
+            min_value = self.background_reinforcement_intensity
 
         reinforced_elements = self.reinforcement_data.reinforcement_table.query(f'{location} > {min_value}')
         reinforced_elements_indices = reinforced_elements.Element_index.astype(int).to_list()
@@ -151,6 +159,20 @@ class ReinforcementScheme:
         points_global = np.linalg.inv(rotation_matrix) @ points_local.T
         return points_global
 
+    def set_background_reinforcement(self, reinforcement_data: ReinforcementData):
+        quantiles = reinforcement_data.reinforcement_table.loc[:, ['Top_X', 'Top_Y', 'Bot_X', 'Bot_Y']].quantile(0.7)
+        self.background_reinforcement = self.calculator.reinforcement_from_intensity(quantiles.max())
+
+    def set_zones_reinforcement(self):
+        for location in self.reinforcement_zones:
+            for zone in self.reinforcement_zones[location]:  # type: ReinforcementZone
+                indices = self.reinforcement_data.elements_table.loc[zone.elements].Reinforcement_index
+                max_intensity = self.reinforcement_data.reinforcement_table.loc[indices, location].max()
+
+                zone.max_intensity = max_intensity
+                zone.background_reinforcement = self.background_reinforcement
+                zone.background_reinforcement_intensity = self.background_reinforcement_intensity
+
     @staticmethod
     def make_rotation_matrix_2d(x, y) -> np.array:
         tan_alpha = y / (x + 1e-9)
@@ -158,3 +180,8 @@ class ReinforcementScheme:
 
         return np.array([[np.cos(alpha), -np.sin(alpha)],
                          [np.sin(alpha), np.cos(alpha)]])
+
+    @property
+    def background_reinforcement_intensity(self) -> float:
+        return self.calculator.intensity_from_diameter_and_step(self.background_reinforcement['diameter'],
+                                                                self.background_reinforcement['step'])

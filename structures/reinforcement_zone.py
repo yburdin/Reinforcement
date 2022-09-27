@@ -90,8 +90,11 @@ class ReinforcementZone:
     def bounding_rectangle_adjusted(self) -> np.array:
         scale = [self.dimensions_adjusted[i] / self.dimensions[i] for i in range(2)]
 
+        rotation_matrix = self.make_rotation_matrix_2d(*self.reinforcement_direction[:2])
+
         scale_matrix = np.array([[scale[0], 0],
                                  [0, scale[1]]])
+        scale_matrix = rotation_matrix @ scale_matrix @ np.linalg.inv(rotation_matrix)
 
         rect_scaled = (scale_matrix @ self.bounding_rectangle.T).T
         midpoint_scaled = np.average(rect_scaled[:, 0]), np.average(rect_scaled[:, 1])
@@ -103,3 +106,10 @@ class ReinforcementZone:
 
         return rect_scaled_translated
 
+    @staticmethod
+    def make_rotation_matrix_2d(x, y) -> np.array:
+        tan_alpha = y / (x + 1e-9)
+        alpha = np.arctan(tan_alpha)
+
+        return np.array([[np.cos(alpha), -np.sin(alpha)],
+                         [np.sin(alpha), np.cos(alpha)]])

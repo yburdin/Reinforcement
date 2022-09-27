@@ -6,7 +6,7 @@ from utils.drawings import Drawer
 
 
 if __name__ == '__main__':
-    example_name = 'example_1'
+    example_name = 'example_2'
     asf_path = f'examples/{example_name}/{example_name}.asf'
     reinforcement = ReinforcementData()
     reinforcement.import_asf(asf_path)

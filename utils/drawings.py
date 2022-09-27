@@ -36,7 +36,7 @@ class Drawer:
                 msp.add_text(f'{zone_diameter} шаг {zone_step}',
                              dxfattribs={'layer': f'TEXT_{location}',
                                          'height': 0.2}).set_placement(zone.midpoint)
-                msp.add_text(f'({zone_dim[0] * 1000:.4g}x{zone_dim[1] * 1000:.4g})',
+                msp.add_text(f'({zone_dim[0] * 1000:.6g}x{zone_dim[1] * 1000:.6g})',
                              dxfattribs={'layer': f'TEXT_{location}',
                                          'height': 0.2}).set_placement((zone.midpoint[0], zone.midpoint[1] - 0.25))
 

@@ -23,11 +23,19 @@ class ReinforcementScheme:
         self.scad_data = None
         self.background_reinforcement = {'diameter': 0,
                                          'step': 0}
+        self.anchorage_lengths = None
 
     @Decorators.timed
     def load_reinforcement_data(self, reinforcement_data: ReinforcementData):
         self.reinforcement_data = reinforcement_data
         self.set_background_reinforcement(reinforcement_data)
+
+    def load_anchorage_lengths(self, path: str):
+        if '.csv' in path:
+            self.anchorage_lengths = pd.read_csv(path, sep=';', index_col=0, header=0)
+            self.anchorage_lengths.columns = ['Length']
+        else:
+            raise TypeError('Wrong file type')
 
     @Decorators.timed
     def find_reinforcement_zones(self, location, min_value=None):
@@ -172,6 +180,9 @@ class ReinforcementScheme:
                 zone.max_intensity = max_intensity
                 zone.background_reinforcement = self.background_reinforcement
                 zone.background_reinforcement_intensity = self.background_reinforcement_intensity
+
+                if self.anchorage_lengths is not None:
+                    zone.anchorage_lengths = self.anchorage_lengths
 
     @staticmethod
     def make_rotation_matrix_2d(x, y) -> np.array:

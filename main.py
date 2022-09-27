@@ -6,7 +6,7 @@ from utils.drawings import Drawer
 
 
 if __name__ == '__main__':
-    example_name = 'example_2'
+    example_name = 'example_1'
     asf_path = f'examples/{example_name}/{example_name}.asf'
     reinforcement = ReinforcementData()
     reinforcement.import_asf(asf_path)
@@ -18,6 +18,7 @@ if __name__ == '__main__':
     reinforcement_scheme = ReinforcementScheme()
     reinforcement_scheme.load_reinforcement_data(reinforcement)
     reinforcement_scheme.load_scad_data(scad_data, 'Плита')
+    reinforcement_scheme.load_anchorage_lengths(f'examples/{example_name}/{example_name}_anchorage_lengths.csv')
 
     plotter = Plotter()
 

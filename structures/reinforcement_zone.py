@@ -12,6 +12,7 @@ class ReinforcementZone:
         self.max_intensity = None
         self.background_reinforcement_intensity = None
         self.background_reinforcement = None
+        self.anchorage_lengths = None
 
     def add_one_element_to_zone(self, element: int, nodes: Iterable):
         if element not in self.elements:
@@ -69,3 +70,36 @@ class ReinforcementZone:
     @property
     def midpoint(self) -> tuple:
         return np.average(self.bounding_rectangle[:, 0]), np.average(self.bounding_rectangle[:, 1])
+
+    @property
+    def dimensions_adjusted(self) -> tuple:
+        diameter, step = [self.additional_reinforcement[value] for value in ['diameter', 'step']]
+        x_m, y_m = self.dimensions
+        x_mm, y_mm = x_m * 1000, y_m * 1000
+
+        anchorage_length = self.anchorage_lengths.loc[diameter, 'Length']
+
+        x_mm_rounded = np.ceil(x_mm / 10) * 10
+        x_mm_adjusted = x_mm_rounded + 2 * anchorage_length
+
+        y_mm_adjusted = ((y_mm // step) + 1) * step
+
+        return x_mm_adjusted / 1000, y_mm_adjusted / 1000
+
+    @property
+    def bounding_rectangle_adjusted(self) -> np.array:
+        scale = [self.dimensions_adjusted[i] / self.dimensions[i] for i in range(2)]
+
+        scale_matrix = np.array([[scale[0], 0],
+                                 [0, scale[1]]])
+
+        rect_scaled = (scale_matrix @ self.bounding_rectangle.T).T
+        midpoint_scaled = np.average(rect_scaled[:, 0]), np.average(rect_scaled[:, 1])
+
+        translation = np.array([[self.midpoint[i] - midpoint_scaled[i] for i in range(2)]
+                                for _ in range(len(rect_scaled))])
+
+        rect_scaled_translated = rect_scaled + translation
+
+        return rect_scaled_translated
+

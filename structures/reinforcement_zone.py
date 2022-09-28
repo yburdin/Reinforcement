@@ -17,10 +17,14 @@ class ReinforcementZone:
     def add_one_element_to_zone(self, element: int, nodes: Iterable):
         if element not in self.elements:
             self.elements = np.append(self.elements, element)
+
+            nodes = [node for node in nodes if node != 0]
             self.nodes = np.union1d(self.nodes, nodes)
 
     def add_multiple_elements_to_zone(self, elements: Iterable, nodes: Iterable):
         self.elements = np.union1d(self.elements, elements)
+
+        nodes = [node for node in nodes if node != 0]
         self.nodes = np.union1d(self.nodes, nodes)
 
     def set_reinforcement_direction(self, x: float, y: float, z: float):

@@ -8,7 +8,7 @@ class Decorators:
             start = time.time()
             return_value = func(*args, **kwargs)
             end = time.time()
-            if end - start > 0.1:
+            if end - start > 1:
                 print(f'{func.__name__} time {(end - start):.3g} seconds')
             return return_value
 

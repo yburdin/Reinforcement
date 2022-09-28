@@ -75,6 +75,8 @@ class Plotter:
 
         for element in reinforcement.elements_table.index:
             element_nodes = reinforcement.elements_table.loc[element, 'Nodes']
+            element_nodes = [node for node in element_nodes if node > 0]
+
             xs = reinforcement.nodes_table.loc[element_nodes, 'X'].values
             ys = reinforcement.nodes_table.loc[element_nodes, 'Y'].values
 
@@ -115,6 +117,8 @@ class Plotter:
     def add_mesh_to_ax_2d(ax: plt.Axes, nodes_table: pd.DataFrame, elements_table: pd.DataFrame):
         for element in elements_table.index:
             element_nodes = elements_table.loc[element, 'Nodes']
+            element_nodes = [node for node in element_nodes if node > 0]
+
             xs = nodes_table.loc[element_nodes, 'X'].values
             ys = nodes_table.loc[element_nodes, 'Y'].values
 

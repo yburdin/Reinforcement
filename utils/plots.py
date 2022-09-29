@@ -85,8 +85,7 @@ class Plotter:
 
             ax.plot(xs, ys, c='xkcd:grey')
 
-            reinforcement_con = reinforcement.reinforcement_table.Element_index == element
-            reinforcement_value = reinforcement.reinforcement_table.loc[reinforcement_con, reinforcement_loc].iloc[0]
+            reinforcement_value = reinforcement.elements_table.loc[element, reinforcement_loc]
 
             if reinforcement_value <= min_value:
                 face_color = (1, 1, 1, 1)
@@ -102,15 +101,15 @@ class Plotter:
         fig.colorbar(sm, ticks=np.linspace(v_min, v_max, 9), format='%.3g')
         plt.show()
 
-    def plot_reinforcement_zones_2d(self, scheme: ReinforcementScheme, reinforcement_loc: str):
+    def plot_reinforcement_zones_2d(self, scheme: ReinforcementScheme, reinforcement_loc: str, plot_directions=False):
         fig = plt.figure()
         ax = fig.add_subplot()
 
         fig.suptitle(f'Zones {reinforcement_loc.replace("_", " ")}')
 
-        self.add_mesh_to_ax_2d(ax, scheme.reinforcement_data.nodes_table, scheme.reinforcement_data.elements_table)
-        self.add_force_directions_to_ax_2d(ax, scheme.reinforcement_data.reinforcement_table,
-                                           scheme.scad_data)
+        self.add_mesh_to_ax_2d(ax, scheme.nodes_table, scheme.elements_table)
+        if plot_directions:
+            self.add_force_directions_to_ax_2d(ax, scheme.elements_table)
         self.add_reinforcement_zones_to_ax_2d(ax, scheme, reinforcement_loc)
 
     @staticmethod
@@ -128,10 +127,10 @@ class Plotter:
             ax.plot(xs, ys, c='xkcd:grey')
 
     @staticmethod
-    def add_force_directions_to_ax_2d(ax: plt.Axes, elements_table: pd.DataFrame, rotation_table: pd.DataFrame):
+    def add_force_directions_to_ax_2d(ax: plt.Axes, elements_table: pd.DataFrame):
         for element in elements_table.index:
             x, y = elements_table.loc[element, ['Element_center_X', 'Element_center_Y']]
-            rotation_type, direction = rotation_table.loc[element, ['Rotation_type', 'Direction']]
+            rotation_type, direction = elements_table.loc[element, ['Rotation_type', 'Direction']]
 
             if rotation_type == 'EX':
                 dx = direction[0] / max(direction) * 0.1

@@ -19,6 +19,7 @@ if __name__ == '__main__':
     reinforcement_scheme.load_reinforcement_data(reinforcement)
     reinforcement_scheme.load_scad_data(scad_data, 'Плита')
     reinforcement_scheme.load_anchorage_lengths(f'examples/{example_name}/{example_name}_anchorage_lengths.csv')
+    reinforcement_scheme.make_combined_table()
 
     plotter = Plotter()
 

@@ -1,11 +1,13 @@
 from utils.decorators import Decorators
 from typing import List
 import pandas as pd
+import numpy as np
 import re
 
 
 class SCADData:
     def __init__(self):
+        self.nodes_table = None
         self.elements_table = None
         self.reinforcement_groups = {}
 
@@ -14,19 +16,28 @@ class SCADData:
         with open(path) as f:
             data = f.read()
 
+        self.nodes_table = self.import_nodes_form_txt_data(data)
         self.elements_table = self.import_elements_from_txt_data(data)
+
         force_direction_table = self.import_force_directions_from_txt_data(data)
         self.elements_table = pd.concat([self.elements_table, force_direction_table], axis=1)
 
+        element_centers_table = self.calculate_element_centers(self.elements_table.Nodes, self.nodes_table)
+        self.elements_table = pd.concat([self.elements_table, element_centers_table], axis=1)
+
         self.reinforcement_groups = self.import_reinforcement_groups_from_txt_data(data)
 
+    @Decorators.timed
     def import_force_directions_from_txt_data(self, data: str) -> pd.DataFrame:
+        print(f'Importing force directions from txt')
+
         force_direction_table = pd.DataFrame(columns=('Rotation_type', 'Direction'))
 
         force_axis = re.search(r'\(33/[\s\w=:\-/.+"]+\)', data).group().replace('\n', ' ')
         force_axis = force_axis.split('/')
         force_axis = [line.replace('  ', ' ').strip() for line in force_axis if 'EX' in line or 'EY' in line]
-        for line in force_axis:
+
+        for n, line in enumerate(force_axis):
             line_info, elements = line.split(':')
 
             rotation_type, x, y, z = line_info.split(' ')[0:4]
@@ -46,7 +57,9 @@ class SCADData:
 
         return force_direction_table
 
+    @Decorators.timed
     def import_reinforcement_groups_from_txt_data(self, data: str) -> dict:
+        print(f'Importing reinforcement groups from txt')
         reinforcement_groups_dict = {}
 
         reinforcement_groups = re.search(r'\(53/[\w\s\d=\".:\-/,]+\)', data).group().replace('\n', ' ')
@@ -62,50 +75,194 @@ class SCADData:
 
         return reinforcement_groups_dict
 
-    @staticmethod
-    def import_elements_from_txt_data(data: str) -> pd.DataFrame:
+    @Decorators.timed
+    def import_elements_from_txt_data_slow(self, data: str) -> pd.DataFrame:
         element_table = pd.DataFrame(columns=('Element_type', 'Stiffness'))
         element_series = pd.Series(name='Nodes', dtype=object)
 
         elements_data = re.search(r'\(1/[\d\s\w:/]+\)', data).group().replace('\n', ' ').replace('  ', ' ')
         elements_data = elements_data.split('/')
-        for element_info in elements_data:
+        for n, element_info in enumerate(elements_data):
+            if n % 500 == 0:
+                print(f'Importing elements from txt: {n} / {len(elements_data)}')
+
             element_info = element_info.strip()
 
             if ' ' not in element_info:
                 continue
 
             if element_info[0] != 'r':
-                element_info = element_info.split(' ')
+                element_info = element_info.replace('  ', ' ').split(' ')
 
-                element_type = int(element_info[0])
-                element_stiffness = int(element_info[1])
-                nodes = [int(node) for node in element_info[2:] if len(node) > 0]
+                try:
+                    element_type = int(element_info[0])
+                    element_stiffness = int(element_info[1])
+                    nodes = [int(node) for node in element_info[2:] if len(node) > 0]
+                except ValueError as e:
+                    raise e
 
                 element_table.loc[len(element_table)] = element_type, element_stiffness
                 element_series.loc[len(element_series)] = nodes
             else:
-                n, k = element_info[2:].split(':')
-                n = n.strip()
-                k = k.strip()
-
-                n1 = int(n[0])
-                n2 = 1 if len(n) < 3 else int(n[2])
-
-                k_type = int(k[0])
-                k_stiffness = int(k[2])
-                k_nodes = [int(k_node) for k_node in k[4:].split(' ') if len(k_node) > 0]
+                n_list, k_list = self.scad_repeat_line_operator(element_info)
+                n2 = n_list[1]
+                k_type = int(k_list[0])
+                k_stiffness = int(k_list[1])
+                k_nodes = k_list[2:]
 
                 for _ in range(n2):
                     element_table.loc[len(element_table)] = (element_table.iloc[-1].Element_type + k_type,
                                                              element_table.iloc[-1].Stiffness + k_stiffness)
-                    element_series.loc[len(element_series)] = [element_series.iloc[-1][i] + k_nodes[i]
+                    element_series.loc[len(element_series)] = [element_series.iloc[-1][i] + int(k_nodes[i])
                                                                for i in range(len(k_nodes))]
 
         element_table = pd.concat([element_table, element_series], axis=1)
         element_table.index = range(1, len(element_table) + 1)
 
         return element_table
+
+    @Decorators.timed
+    def import_nodes_form_txt_data_slow(self, data: str) -> pd.DataFrame:
+        nodes_table = pd.DataFrame(columns=('X', 'Y', 'Z'))
+
+        nodes_data = re.search(r'\(4/[\d\s\w:/".,\-]+\)', data).group().replace('\n', ' ').replace('  ', ' ')
+        nodes_data = nodes_data.split('/')
+
+        for n, node_info in enumerate(nodes_data):
+            if n % 500 == 0:
+                print(f'Importing nodes from txt: {n} / {len(nodes_data)}')
+            node_info = node_info.strip()
+
+            if '(' in node_info or ')' in node_info:
+                continue
+
+            if node_info[0] != 'r':
+                coordinates = [0, 0, 0]
+                node_info_coordinates = node_info.replace('  ', ' ').split(' ')
+                for i in range(len(node_info_coordinates)):
+                    try:
+                        coordinates[i] += float(node_info_coordinates[i])
+                    except ValueError as e:
+                        raise e
+                nodes_table.loc[len(nodes_table)] = coordinates
+            else:
+                n_list, k_list = self.scad_repeat_line_operator(node_info)
+
+                n_2 = n_list[1]
+                k_x = k_list[0]
+                k_y = 0 if len(k_list) < 2 else k_list[1]
+                k_z = 0 if len(k_list) < 3 else k_list[2]
+
+                for _ in range(n_2):
+                    nodes_table.loc[len(nodes_table)] = (nodes_table.iloc[-1].X + k_x,
+                                                         nodes_table.iloc[-1].Y + k_y,
+                                                         nodes_table.iloc[-1].Z + k_z)
+
+        nodes_table.index = list(range(1, len(nodes_table) + 1))
+        return nodes_table
+
+    @Decorators.timed
+    def import_elements_from_txt_data(self, data: str) -> pd.DataFrame:
+        elements_table = pd.DataFrame(columns=('Element_type', 'Stiffness'))
+        nodes_series = pd.Series(name='Nodes', dtype=object)
+
+        elements_data = re.search(r'\(1/[\d\s\w:/]+\)', data).group().replace('\n', ' ')
+        while '  ' in elements_data:
+            elements_data = elements_data.replace('  ', ' ')
+
+        elements_data = elements_data.replace('(1/', '').split('/')
+        repeat_operators_positions = [-1] + [i for i in range(len(elements_data)) if 'r' in elements_data[i]]
+        for i in range(1, len(repeat_operators_positions)):
+            pos_prev = repeat_operators_positions[i-1] + 1
+            pos = repeat_operators_positions[i]
+
+            elements_data_i = elements_data[pos_prev:pos]
+            elements_data_i = [list(map(int, element.strip().split(' '))) for element in elements_data_i]
+
+            element_indices = list(range(len(elements_table), len(elements_table) + len(elements_data_i)))
+            new_elements_table = pd.DataFrame(index=element_indices,
+                                              data=[element[:2] for element in elements_data_i],
+                                              columns=('Element_type', 'Stiffness'))
+            new_nodes_series = pd.Series(index=element_indices,
+                                         data=[element[2:] for element in elements_data_i],
+                                         name='Nodes', dtype=object)
+
+            n_list, k_list = self.scad_repeat_line_operator(elements_data[pos])
+            n2 = n_list[1]
+            k_type = int(k_list[0])
+            k_stiffness = int(k_list[1])
+            k_nodes = k_list[2:]
+
+            for _ in range(n2):
+                new_elements_table.loc[len(new_elements_table)] = (new_elements_table.iloc[-1].Element_type + k_type,
+                                                                   new_elements_table.iloc[-1].Stiffness + k_stiffness)
+                new_nodes_series.loc[len(new_nodes_series)] = [new_nodes_series.iloc[-1][i] + int(k_nodes[i])
+                                                               for i in range(len(k_nodes))]
+
+            elements_table = pd.concat([elements_table, new_elements_table], axis=0)
+            nodes_series = pd.concat([nodes_series, new_nodes_series], axis=0)
+
+        elements_table = pd.concat([elements_table, nodes_series], axis=1)
+        elements_table.index = range(1, len(elements_table) + 1)
+
+        return elements_table
+
+    @Decorators.timed
+    def import_nodes_form_txt_data(self, data: str) -> pd.DataFrame:
+        nodes_table = pd.DataFrame(columns=('X', 'Y', 'Z'))
+
+        nodes_data = re.search(r'\(4/[\d\s\w:/".,\-]+\)', data).group().replace('\n', ' ')
+        while '  ' in nodes_data:
+            nodes_data = nodes_data.replace('  ', ' ')
+        nodes_data = nodes_data.replace('(4/', '').split('/')
+
+        repeat_operators_positions = [-1] + [i for i in range(len(nodes_data)) if 'r' in nodes_data[i]]
+        for i in range(1, len(repeat_operators_positions)):
+            pos_prev = repeat_operators_positions[i-1] + 1
+            pos = repeat_operators_positions[i]
+
+            nodes_data_i = nodes_data[pos_prev:pos]
+            nodes_data_i = [list(map(float, node.strip().split(' '))) for node in nodes_data_i]
+            nodes_data_i = list(map(self.add_zeros, nodes_data_i))
+
+            nodes_coordinates = np.zeros((len(nodes_data_i), 3)) + np.array(nodes_data_i)
+            nodes_indices = list(range(len(nodes_table), len(nodes_table) + len(nodes_coordinates)))
+            new_nodes_table = pd.DataFrame(index=nodes_indices, data=nodes_coordinates, columns=('X', 'Y', 'Z'))
+
+            n_list, k_list = self.scad_repeat_line_operator(nodes_data[pos])
+
+            n_2 = n_list[1]
+            k_x = k_list[0]
+            k_y = 0 if len(k_list) < 2 else k_list[1]
+            k_z = 0 if len(k_list) < 3 else k_list[2]
+
+            for _ in range(n_2):
+                new_nodes_table.loc[len(new_nodes_table)] = (new_nodes_table.iloc[-1].X + k_x,
+                                                             new_nodes_table.iloc[-1].Y + k_y,
+                                                             new_nodes_table.iloc[-1].Z + k_z)
+
+            nodes_table = pd.concat([nodes_table, new_nodes_table], axis=0)
+
+        nodes_table.index = list(range(1, len(nodes_table) + 1))
+        return nodes_table
+
+    @staticmethod
+    def add_zeros(node: List[float]) -> List[float]:
+        while len(node) < 3:
+            node += [0]
+        return node
+
+    @staticmethod
+    @Decorators.timed
+    def calculate_element_centers(element_nodes: pd.Series, nodes_table: pd.DataFrame) -> pd.DataFrame:
+        centers_table = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',))
+
+        for n, element in enumerate(element_nodes.index):
+            nodes = element_nodes.loc[element]
+            nodes_coordinates = nodes_table.loc[nodes, ['X', 'Y', 'Z']]
+            centers_table.loc[element] = nodes_coordinates.mean().values
+
+        return centers_table
 
     @staticmethod
     def get_element_list_from_string(s: str) -> List[int]:
@@ -133,3 +290,18 @@ class SCADData:
 
         return element_indices
 
+    @staticmethod
+    def scad_repeat_line_operator(s: str) -> tuple:
+        try:
+            s = re.search(r'\d[\d\s]+:[\d\s.\-]+', s).group()
+        except AttributeError as e:
+            raise e
+
+        n, k = s.split(':')
+        n = n.strip()
+        k = k.strip()
+
+        n_list = [int(n_i) for n_i in n.split(' ') if len(n_i) > 0]
+        k_list = [float(k_i) for k_i in k.split(' ') if len(k_i) > 0]
+
+        return n_list, k_list

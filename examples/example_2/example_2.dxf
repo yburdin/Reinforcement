@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2459850.8560648146
+2459852.6069675926
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2459850.856076389
+2459852.6069675926
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{0A0F2628-5B00-4BFA-B7F3-A52FE538B380}
+{5243F421-596A-42E5-BEB9-F1471A82CBBE}
   9
 $VERSIONGUID
   2
-{9DFBABD9-A488-42AE-AAB0-2C41568AD168}
+{5ED98194-4AE5-4A2C-A5C2-E21EE7E874CE}
   9
 $EXTNAMES
 290
@@ -1327,9 +1327,9 @@ ISM
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1343,9 +1343,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1619,7 +1619,7 @@ TEXT
  70
 0
  62
-198
+169
   6
 Continuous
 370
@@ -1643,7 +1643,7 @@ Top_X
  70
 0
  62
-151
+157
   6
 Continuous
 370
@@ -1667,7 +1667,7 @@ TEXT_Top_X
  70
 0
  62
-70
+29
   6
 Continuous
 370
@@ -1691,7 +1691,7 @@ Top_Y
  70
 0
  62
-164
+48
   6
 Continuous
 370
@@ -1715,7 +1715,7 @@ TEXT_Top_Y
  70
 0
  62
-180
+18
   6
 Continuous
 370
@@ -1739,7 +1739,7 @@ Bot_X
  70
 0
  62
-56
+65
   6
 Continuous
 370
@@ -1763,7 +1763,7 @@ TEXT_Bot_X
  70
 0
  62
-225
+67
   6
 Continuous
 370
@@ -1787,7 +1787,7 @@ Bot_Y
  70
 0
  62
-92
+11
   6
 Continuous
 370
@@ -1811,7 +1811,7 @@ TEXT_Bot_Y
  70
 0
  62
-197
+47
   6
 Continuous
 370
@@ -1835,7 +1835,7 @@ Lat_X
  70
 0
  62
-96
+138
   6
 Continuous
 370
@@ -1859,7 +1859,7 @@ TEXT_Lat_X
  70
 0
  62
-94
+72
   6
 Continuous
 370
@@ -1883,7 +1883,7 @@ Lat_Y
  70
 0
  62
-130
+185
   6
 Continuous
 370
@@ -1907,7 +1907,7 @@ TEXT_Lat_Y
  70
 0
  62
-207
+147
   6
 Continuous
 370
@@ -14295,7 +14295,7 @@ DictionaryVariables
 280
 0
   1
-0.18.1 @ 2022-09-27T17:32:44.947933+00:00
+0.18.1 @ 2022-09-29T11:34:02.528485+00:00
   0
 DICTIONARYVAR
   5
@@ -14307,7 +14307,7 @@ DictionaryVariables
 280
 0
   1
-0.18.1 @ 2022-09-27T17:32:45.022820+00:00
+0.18.1 @ 2022-09-29T11:34:02.625244+00:00
   0
 ENDSEC
   0

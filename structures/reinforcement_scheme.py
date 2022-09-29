@@ -11,6 +11,8 @@ import numpy as np
 
 class ReinforcementScheme:
     def __init__(self):
+        self.nodes_table = None
+        self.elements_table = None
         self.calculator = ReinforcementCalculator()
         self.reinforcement_data = None
         self.reinforcement_zones = {'Top_X': [],
@@ -20,7 +22,7 @@ class ReinforcementScheme:
                                     'Lat_X': [],
                                     'Lat_Y': [],
                                     }
-        self.scad_data = None
+        self.scad_data = SCADData()
         self.background_reinforcement = {'diameter': 0,
                                          'step': 0}
         self.anchorage_lengths = None
@@ -37,29 +39,33 @@ class ReinforcementScheme:
         else:
             raise TypeError('Wrong file type')
 
+    def load_scad_data(self, scad_data: SCADData, name: str):
+        self.scad_data.elements_table = scad_data.elements_table.loc[scad_data.reinforcement_groups[name]]
+        self.scad_data.nodes_table = scad_data.nodes_table
+
     @Decorators.timed
     def find_reinforcement_zones(self, location, min_value=None):
-        assert self.reinforcement_data, 'No reinforcement data'
+        assert isinstance(self.elements_table, pd.DataFrame), 'No reinforcement data'
 
         if min_value is None:
             min_value = self.background_reinforcement_intensity
 
-        reinforced_elements = self.reinforcement_data.reinforcement_table.query(f'{location} > {min_value}')
-        reinforced_elements_indices = reinforced_elements.Element_index.astype(int).to_list()
+        reinforced_elements = self.elements_table.query(f'{location} > {min_value}')
+        reinforced_elements_indices = reinforced_elements.index.to_list()
 
         while len(reinforced_elements_indices) > 0:
             first_element = reinforced_elements_indices.pop(0)
-            first_element_nodes = self.reinforcement_data.elements_table.loc[first_element].Nodes
+            first_element_nodes = self.elements_table.loc[first_element].Nodes
 
             zone = ReinforcementZone()
             zone.add_one_element_to_zone(first_element, first_element_nodes)
 
             while True:
-                next_elements = self.find_elements_with_nodes(self.reinforcement_data.elements_table, zone.nodes)
+                next_elements = self.find_elements_with_nodes(self.elements_table, zone.nodes)
                 next_elements = intersect1d(next_elements, reinforced_elements_indices)
 
                 if len(next_elements) > 0:
-                    nodes = np.stack(self.reinforcement_data.elements_table.loc[next_elements].Nodes.values).flatten()
+                    nodes = np.stack(self.elements_table.loc[next_elements].Nodes.values).flatten()
                     zone.add_multiple_elements_to_zone(next_elements, nodes)
                     reinforced_elements_indices = [element for element in reinforced_elements_indices
                                                    if element not in next_elements]
@@ -91,17 +97,11 @@ class ReinforcementScheme:
 
         return result_elements
 
-    def load_scad_data(self, scad_data: SCADData, name: str):
-        self.scad_data = scad_data.elements_table.loc[scad_data.reinforcement_groups[name]]
-
-        self.scad_data = self.scad_data.reset_index()
-        # self.scad_data.index = range(1, len(self.scad_data) + 1)
-
+    @Decorators.timed
     def transfer_reinforcement_direction_to_zones(self):
         for location in self.reinforcement_zones.keys():
             for zone in self.reinforcement_zones[location][:]:
-                zone_elements_indices = self.reinforcement_data.elements_table.loc[zone.elements].Reinforcement_index
-                zone_directions = self.scad_data.loc[zone_elements_indices.astype(int)]
+                zone_directions = self.elements_table.loc[zone.elements, ['Rotation_type', 'Direction']]
 
                 if all([coordinate != 0 for coordinate in zone.reinforcement_direction]):
                     continue
@@ -131,10 +131,8 @@ class ReinforcementScheme:
                                             np.stack(zone_directions.Direction.values) == direction]
 
                         new_zone_indices = zone_directions.iloc[direction_filter].index
-                        new_zone_elements = self.reinforcement_data.reinforcement_table.loc[
-                            new_zone_indices].Element_index.astype(int)
-                        new_zone_nodes = np.stack(
-                            self.reinforcement_data.elements_table.loc[new_zone_elements].Nodes.values)
+                        new_zone_elements = new_zone_indices.to_list()
+                        new_zone_nodes = np.stack(self.elements_table.loc[new_zone_elements].Nodes.values)
                         new_zone_nodes = np.unique(new_zone_nodes)
 
                         new_zone = ReinforcementZone()
@@ -150,7 +148,7 @@ class ReinforcementScheme:
                     self.reinforcement_zones[location].remove(zone)
 
     def get_zone_bounding_rectangle(self, zone: ReinforcementZone) -> np.array:
-        zone_nodes = self.reinforcement_data.nodes_table.loc[zone.nodes]
+        zone_nodes = self.nodes_table.loc[zone.nodes]
 
         rotation_matrix = self.make_rotation_matrix_2d(*zone.reinforcement_direction[:2])
         zone_nodes_coordinates = zone_nodes.loc[:, ['X', 'Y']]
@@ -174,8 +172,7 @@ class ReinforcementScheme:
     def set_zones_reinforcement(self):
         for location in self.reinforcement_zones:
             for zone in self.reinforcement_zones[location]:  # type: ReinforcementZone
-                indices = self.reinforcement_data.elements_table.loc[zone.elements].Reinforcement_index
-                max_intensity = self.reinforcement_data.reinforcement_table.loc[indices, location].max()
+                max_intensity = self.elements_table.loc[zone.elements, location].max()
 
                 zone.max_intensity = max_intensity
                 zone.background_reinforcement = self.background_reinforcement
@@ -183,6 +180,44 @@ class ReinforcementScheme:
 
                 if self.anchorage_lengths is not None:
                     zone.anchorage_lengths = self.anchorage_lengths
+
+    @Decorators.timed
+    def make_combined_table(self):
+        elements_table = self.reinforcement_data.elements_table
+        direction_series = pd.Series(name='Direction', dtype=object)
+
+        for element in elements_table.index:
+            element_center = elements_table.loc[element, ['Element_center_X',
+                                                          'Element_center_Y',
+                                                          'Element_center_Z']].values
+
+            x_con = abs(self.reinforcement_data.reinforcement_table.loc[:, 'Element_center_X'] -
+                        element_center[0]) < 1e-3
+            y_con = abs(self.reinforcement_data.reinforcement_table.loc[:, 'Element_center_Y'] -
+                        element_center[1]) < 1e-3
+            z_con = abs(self.reinforcement_data.reinforcement_table.loc[:, 'Element_center_Z'] -
+                        element_center[2]) < 1e-3
+
+            reinforcement_index = self.reinforcement_data.reinforcement_table.loc[x_con & y_con & z_con].iloc[0].name
+            for column in ['Top_X', 'Top_Y', 'Lat_X', 'Bot_X', 'Bot_Y', 'Lat_Y']:
+                elements_table.loc[element, column] = self.reinforcement_data.reinforcement_table.loc[
+                    reinforcement_index, column]
+
+            x_con = abs(self.scad_data.elements_table.loc[:, 'Element_center_X'] - element_center[0]) < 1e-3
+            y_con = abs(self.scad_data.elements_table.loc[:, 'Element_center_Y'] - element_center[1]) < 1e-3
+            z_con = abs(self.scad_data.elements_table.loc[:, 'Element_center_Z'] - element_center[2]) < 1e-3
+            scad_index = self.scad_data.elements_table.loc[x_con & y_con & z_con].iloc[0].name
+            elements_table.loc[element, 'Rotation_type'] = self.scad_data.elements_table.loc[scad_index,
+                                                                                             'Rotation_type']
+            direction_series.loc[element] = self.scad_data.elements_table.loc[scad_index, 'Direction']
+
+        elements_table = pd.concat([elements_table, direction_series], axis=1)
+
+        self.elements_table = elements_table
+        self.nodes_table = self.reinforcement_data.nodes_table
+
+        self.reinforcement_data = None
+        self.scad_data = None
 
     @staticmethod
     def make_rotation_matrix_2d(x, y) -> np.array:

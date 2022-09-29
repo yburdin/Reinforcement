@@ -37,7 +37,6 @@ class ReinforcementData:
                     self.import_element_line(line)
 
         self.calculate_element_centers()
-        self.compare_tables()
 
     def import_node_line(self, line: str):
         split_line = [item for item in line.split(' ') if item != '']
@@ -76,19 +75,3 @@ class ReinforcementData:
                                        element_center_z / n_nodes)
 
         self.elements_table = pd.concat([self.elements_table, elements_centers], axis=1)
-
-    @Decorators.timed
-    def compare_tables(self):
-        for element in self.elements_table.index:
-            element_center = self.elements_table.loc[element, ['Element_center_X',
-                                                               'Element_center_Y',
-                                                               'Element_center_Z']].values
-
-            x_con = abs(self.reinforcement_table.loc[:, 'Element_center_X'] - element_center[0]) < 1e-3
-            y_con = abs(self.reinforcement_table.loc[:, 'Element_center_Y'] - element_center[1]) < 1e-3
-            z_con = abs(self.reinforcement_table.loc[:, 'Element_center_Z'] - element_center[2]) < 1e-3
-
-            reinforcement_index = self.reinforcement_table.loc[x_con & y_con & z_con].iloc[0].name
-
-            self.elements_table.loc[element, 'Reinforcement_index'] = reinforcement_index
-            self.reinforcement_table.loc[reinforcement_index, 'Element_index'] = element

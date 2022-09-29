@@ -1,4 +1,5 @@
 from utils.scad_data import SCADData
+from structures.reinforcement_scheme import ReinforcementScheme
 import unittest
 import pandas as pd
 
@@ -78,7 +79,7 @@ class ImportTest(unittest.TestCase):
             element_series = pd.Series(data=[[1, 2, 3, 4]], dtype=object, name='Nodes')
             nodes_table = pd.DataFrame(data={'X': [0, 50, 50, 0], 'Y': [0, 0, 100, 100], 'Z': [0, 0, 0, 0]},
                                        index=[1, 2, 3, 4])
-            centers = SCADData.calculate_element_centers(element_series, nodes_table)
+            centers = ReinforcementScheme.calculate_element_centers(element_series, nodes_table)
 
             self.assertEqual(centers.loc[0].Element_center_X, 25)
             self.assertEqual(centers.loc[0].Element_center_Y, 50)

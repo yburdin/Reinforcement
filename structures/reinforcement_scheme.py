@@ -186,6 +186,9 @@ class ReinforcementScheme:
         elements_table = self.reinforcement_data.elements_table
         direction_series = pd.Series(name='Direction', dtype=object)
 
+        centers_table = self.calculate_element_centers(self.scad_data.elements_table.Nodes, self.scad_data.nodes_table)
+        self.scad_data.elements_table = pd.concat([self.scad_data.elements_table, centers_table], axis=1)
+
         for element in elements_table.index:
             element_center = elements_table.loc[element, ['Element_center_X',
                                                           'Element_center_Y',
@@ -206,7 +209,8 @@ class ReinforcementScheme:
             x_con = abs(self.scad_data.elements_table.loc[:, 'Element_center_X'] - element_center[0]) < 1e-3
             y_con = abs(self.scad_data.elements_table.loc[:, 'Element_center_Y'] - element_center[1]) < 1e-3
             z_con = abs(self.scad_data.elements_table.loc[:, 'Element_center_Z'] - element_center[2]) < 1e-3
-            scad_index = self.scad_data.elements_table.loc[x_con & y_con & z_con].iloc[0].name
+            scad_element = self.scad_data.elements_table.loc[x_con & y_con & z_con].iloc[0]
+            scad_index = scad_element.name
             elements_table.loc[element, 'Rotation_type'] = self.scad_data.elements_table.loc[scad_index,
                                                                                              'Rotation_type']
             direction_series.loc[element] = self.scad_data.elements_table.loc[scad_index, 'Direction']
@@ -231,3 +235,15 @@ class ReinforcementScheme:
     def background_reinforcement_intensity(self) -> float:
         return self.calculator.intensity_from_diameter_and_step(self.background_reinforcement['diameter'],
                                                                 self.background_reinforcement['step'])
+
+    @staticmethod
+    @Decorators.timed
+    def calculate_element_centers(element_nodes: pd.Series, nodes_table: pd.DataFrame) -> pd.DataFrame:
+        centers_table = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',))
+
+        for n, element in enumerate(element_nodes.index):
+            nodes = element_nodes.loc[element]
+            nodes_coordinates = nodes_table.loc[nodes, ['X', 'Y', 'Z']]
+            centers_table.loc[element] = nodes_coordinates.mean().values
+
+        return centers_table

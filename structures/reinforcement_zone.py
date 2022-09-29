@@ -98,7 +98,7 @@ class ReinforcementZone:
 
         scale_matrix = np.array([[scale[0], 0],
                                  [0, scale[1]]])
-        scale_matrix = rotation_matrix @ scale_matrix @ np.linalg.inv(rotation_matrix)
+        scale_matrix = np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
 
         rect_scaled = (scale_matrix @ self.bounding_rectangle.T).T
         midpoint_scaled = np.average(rect_scaled[:, 0]), np.average(rect_scaled[:, 1])
@@ -117,3 +117,9 @@ class ReinforcementZone:
 
         return np.array([[np.cos(alpha), -np.sin(alpha)],
                          [np.sin(alpha), np.cos(alpha)]])
+
+    @property
+    def alpha(self) -> float:
+        x, y = self.reinforcement_direction[:2]
+        tan_alpha = y / (x + 1e-9)
+        return np.arctan(tan_alpha)

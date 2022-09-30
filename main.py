@@ -17,6 +17,7 @@ if __name__ == '__main__':
 
     reinforcement_scheme = ReinforcementScheme()
     reinforcement_scheme.load_reinforcement_data(reinforcement)
+    reinforcement_scheme.set_background_reinforcement(reinforcement)
 
     if example_name == 'example_4':
         reinforcement_scheme.load_scad_data(scad_data, 'Перекрытие 1-го этажа')

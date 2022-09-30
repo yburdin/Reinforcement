@@ -3,7 +3,7 @@ from structures.reinforcement_zone import ReinforcementZone
 from utils.reinforcement_data import ReinforcementData
 from utils.scad_data import SCADData
 from utils.decorators import Decorators
-from typing import List
+from typing import List, Optional
 from numpy import intersect1d
 import pandas as pd
 import numpy as np
@@ -30,7 +30,6 @@ class ReinforcementScheme:
     @Decorators.timed
     def load_reinforcement_data(self, reinforcement_data: ReinforcementData):
         self.reinforcement_data = reinforcement_data
-        self.set_background_reinforcement(reinforcement_data)
 
     def load_anchorage_lengths(self, path: str):
         if '.csv' in path:
@@ -152,7 +151,7 @@ class ReinforcementScheme:
 
         rotation_matrix = self.make_rotation_matrix_2d(*zone.reinforcement_direction[:2])
         zone_nodes_coordinates = zone_nodes.loc[:, ['X', 'Y']]
-        local_coordinates = (rotation_matrix @ zone_nodes_coordinates.values.T).T
+        local_coordinates = (np.linalg.inv(rotation_matrix) @ zone_nodes_coordinates.values.T).T
 
         min_x_local, min_y_local = local_coordinates[:, 0].min(), local_coordinates[:, 1].min()
         max_x_local, max_y_local = local_coordinates[:, 0].max(), local_coordinates[:, 1].max()
@@ -162,12 +161,27 @@ class ReinforcementScheme:
                                  [max_x_local, max_y_local],
                                  [max_x_local, min_y_local],
                                  ])
-        points_global = np.linalg.inv(rotation_matrix) @ points_local.T
+        points_global = rotation_matrix @ points_local.T
         return points_global
 
-    def set_background_reinforcement(self, reinforcement_data: ReinforcementData):
-        quantiles = reinforcement_data.reinforcement_table.loc[:, ['Top_X', 'Top_Y', 'Bot_X', 'Bot_Y']].quantile(0.7)
-        self.background_reinforcement = self.calculator.reinforcement_from_intensity(quantiles.max())
+    def set_background_reinforcement(self, reinforcement_data: Optional[ReinforcementData] = None, auto: bool = True,
+                                     reinforcement: Optional[dict] = None, intensity: Optional[float] = 0.):
+
+        if auto:
+            quantiles = reinforcement_data.reinforcement_table.loc[:, ['Top_X', 'Top_Y',
+                                                                       'Bot_X', 'Bot_Y']].quantile(0.8)
+            self.background_reinforcement = self.calculator.reinforcement_from_intensity(quantiles.max())
+        else:
+            if reinforcement is not None and intensity == 0:
+                assert 'diameter' in reinforcement, 'No diameter in manual background reinforcement'
+                assert 'step' in reinforcement, 'No step in manual background reinforcement'
+
+                self.background_reinforcement = {'diameter': reinforcement['diameter'],
+                                                 'step': reinforcement['step']}
+            elif reinforcement is None and intensity > 0:
+                self.background_reinforcement = self.calculator.reinforcement_from_intensity(intensity)
+            else:
+                raise ValueError('Manual background reinforcement error')
 
     def set_zones_reinforcement(self):
         for location in self.reinforcement_zones:

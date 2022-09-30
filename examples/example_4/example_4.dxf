@@ -493,7 +493,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2459853.708900463
+2459853.9634375
   9
 $TDUCREATE
  40
@@ -501,7 +501,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2459853.708900463
+2459853.9634375
   9
 $TDUUPDATE
  40
@@ -933,11 +933,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{9D03CDFC-E60B-4B76-A894-57B5AE98DC92}
+{266B1F7B-A69F-435D-A15A-236618009402}
   9
 $VERSIONGUID
   2
-{469EAD86-FD5E-4203-9DA8-DC95BCBE25A2}
+{02BBC9CC-C1D9-4CFB-9B5A-73B5089D0ABE}
   9
 $EXTNAMES
 290
@@ -1327,9 +1327,9 @@ ISM
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1343,9 +1343,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1619,7 +1619,7 @@ TEXT
  70
 0
  62
-85
+191
   6
 Continuous
 370
@@ -1643,7 +1643,7 @@ Top_X
  70
 0
  62
-37
+188
   6
 Continuous
 370
@@ -1667,7 +1667,7 @@ TEXT_Top_X
  70
 0
  62
-62
+166
   6
 Continuous
 370
@@ -1691,7 +1691,7 @@ Top_Y
  70
 0
  62
-84
+206
   6
 Continuous
 370
@@ -1715,7 +1715,7 @@ TEXT_Top_Y
  70
 0
  62
-175
+186
   6
 Continuous
 370
@@ -1739,7 +1739,7 @@ Bot_X
  70
 0
  62
-17
+55
   6
 Continuous
 370
@@ -1763,7 +1763,7 @@ TEXT_Bot_X
  70
 0
  62
-95
+153
   6
 Continuous
 370
@@ -1787,7 +1787,7 @@ Bot_Y
  70
 0
  62
-220
+125
   6
 Continuous
 370
@@ -1811,7 +1811,7 @@ TEXT_Bot_Y
  70
 0
  62
-120
+55
   6
 Continuous
 370
@@ -1835,7 +1835,7 @@ Lat_X
  70
 0
  62
-28
+150
   6
 Continuous
 370
@@ -1859,7 +1859,7 @@ TEXT_Lat_X
  70
 0
  62
-34
+17
   6
 Continuous
 370
@@ -1883,7 +1883,7 @@ Lat_Y
  70
 0
  62
-17
+124
   6
 Continuous
 370
@@ -1907,7 +1907,7 @@ TEXT_Lat_Y
  70
 0
  62
-150
+226
   6
 Continuous
 370
@@ -39515,7 +39515,7 @@ DictionaryVariables
 280
 0
   1
-0.18.1 @ 2022-09-30T14:00:49.663052+00:00
+0.18.1 @ 2022-09-30T20:07:21.265130+00:00
   0
 DICTIONARYVAR
   5
@@ -39527,7 +39527,7 @@ DictionaryVariables
 280
 0
   1
-0.18.1 @ 2022-09-30T14:00:49.987207+00:00
+0.18.1 @ 2022-09-30T20:07:21.516474+00:00
   0
 ENDSEC
   0

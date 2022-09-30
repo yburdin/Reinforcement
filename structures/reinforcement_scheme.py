@@ -39,6 +39,7 @@ class ReinforcementScheme:
             raise TypeError('Wrong file type')
 
     def load_scad_data(self, scad_data: SCADData, name: str):
+        self.scad_data = SCADData()
         self.scad_data.elements_table = scad_data.elements_table.loc[scad_data.reinforcement_groups[name]]
         self.scad_data.nodes_table = scad_data.nodes_table
 
@@ -236,6 +237,41 @@ class ReinforcementScheme:
 
         self.reinforcement_data = None
         self.scad_data = None
+
+    @Decorators.timed
+    def make_combined_table_test(self):
+        centers_table = self.calculate_element_centers(self.scad_data.elements_table.Nodes, self.scad_data.nodes_table)
+        self.scad_data.elements_table = pd.concat([self.scad_data.elements_table, centers_table], axis=1)
+
+        scad_index = self.scad_data.elements_table.sort_values(by=['Element_center_X',
+                                                                   'Element_center_Y',
+                                                                   'Element_center_Z']).index
+        reinforcement_index = self.reinforcement_data.reinforcement_table.sort_values(by=['Element_center_X',
+                                                                                          'Element_center_Y',
+                                                                                          'Element_center_Z']).index
+        asf_index = self.reinforcement_data.elements_table.sort_values(by=['Element_center_X',
+                                                                           'Element_center_Y',
+                                                                           'Element_center_Z']).index
+
+        asf_columns = self.reinforcement_data.elements_table.columns
+        # scad_columns = self.scad_data.elements_table.columns
+        scad_columns = ['Rotation_type', 'Direction']
+        reinforcement_columns = [column for column in self.reinforcement_data.reinforcement_table.columns
+                                 if column not in asf_columns]
+
+        self.elements_table = pd.concat(
+            [
+                self.reinforcement_data.elements_table.loc[asf_index].reset_index(drop=True),
+                self.reinforcement_data.reinforcement_table.loc[reinforcement_index,
+                                                                reinforcement_columns].reset_index(drop=True),
+                self.scad_data.elements_table.loc[scad_index, scad_columns].reset_index(drop=True),
+            ], axis=1)
+
+        # self.nodes_table = self.scad_data.nodes_table
+        self.nodes_table = self.reinforcement_data.nodes_table
+
+        # self.reinforcement_data = None
+        # self.scad_data = None
 
     @staticmethod
     def make_rotation_matrix_2d(x, y) -> np.array:

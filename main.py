@@ -6,7 +6,7 @@ from utils.drawings import Drawer
 
 
 if __name__ == '__main__':
-    example_name = 'example_1'
+    example_name = 'example_2'
     asf_path = f'examples/{example_name}/{example_name}.asf'
     reinforcement = ReinforcementData()
     reinforcement.import_asf(asf_path)
@@ -29,18 +29,18 @@ if __name__ == '__main__':
     plotter = Plotter()
 
     for loc in [
-        # 'Top_X',
-        # 'Top_Y',
+        'Top_X',
+        'Top_Y',
         'Bot_X',
-        # 'Bot_Y'
+        'Bot_Y'
     ]:
         reinforcement_scheme.find_reinforcement_zones(loc)
         reinforcement_scheme.transfer_reinforcement_direction_to_zones()
         reinforcement_scheme.set_zones_reinforcement()
 
-        plotter.plot_reinforcement_2d(reinforcement, loc,
-                                      min_value=reinforcement_scheme.background_reinforcement_intensity)
-        plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc, plot_directions=True)
+        # plotter.plot_reinforcement_2d(reinforcement, loc,
+        #                               min_value=reinforcement_scheme.background_reinforcement_intensity)
+        # plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc, plot_directions=True)
 
     drawer = Drawer()
     drawer.dxf_draw_zones(reinforcement_scheme, f'examples/{example_name}/{example_name}.dxf')

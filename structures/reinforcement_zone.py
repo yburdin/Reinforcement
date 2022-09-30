@@ -44,11 +44,12 @@ class ReinforcementZone:
 
     @property
     def dimensions(self):
-        p1 = complex(*self.bounding_rectangle[0])
-        p2 = complex(*self.bounding_rectangle[1])
-        p3 = complex(*self.bounding_rectangle[2])
+        rotation_matrix = self.make_rotation_matrix_2d(*self.reinforcement_direction[:2])
+        points = (np.linalg.inv(rotation_matrix) @ self.bounding_rectangle.T).T
+        x_dim = abs(points[:, 0].max() - points[:, 0].min())
+        y_dim = abs(points[:, 1].max() - points[:, 1].min())
 
-        return abs(p2-p1), abs(p3-p2)
+        return x_dim, y_dim
 
     @property
     def additional_reinforcement(self) -> dict:
@@ -81,10 +82,10 @@ class ReinforcementZone:
         x_m, y_m = self.dimensions
         x_mm, y_mm = x_m * 1000, y_m * 1000
 
-        anchorage_length = self.anchorage_lengths.loc[diameter, 'Length']
+        anchorage_length_mm = self.anchorage_lengths.loc[diameter, 'Length']
 
         x_mm_rounded = np.ceil(x_mm / 10) * 10
-        x_mm_adjusted = x_mm_rounded + 2 * anchorage_length
+        x_mm_adjusted = x_mm_rounded + 2 * anchorage_length_mm
 
         y_mm_adjusted = ((y_mm // step) + 1) * step
 
@@ -98,9 +99,9 @@ class ReinforcementZone:
 
         scale_matrix = np.array([[scale[0], 0],
                                  [0, scale[1]]])
-        scale_matrix = np.linalg.inv(rotation_matrix) @ scale_matrix @ rotation_matrix
+        transform_matrix = rotation_matrix @ scale_matrix @ np.linalg.inv(rotation_matrix)
 
-        rect_scaled = (scale_matrix @ self.bounding_rectangle.T).T
+        rect_scaled = (transform_matrix @ self.bounding_rectangle.T).T
         midpoint_scaled = np.average(rect_scaled[:, 0]), np.average(rect_scaled[:, 1])
 
         translation = np.array([[self.midpoint[i] - midpoint_scaled[i] for i in range(2)]

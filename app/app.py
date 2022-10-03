@@ -1,8 +1,6 @@
 import tkinter.messagebox
 from tkinter import filedialog as fd
 from tkinter import Menu, Tk, Label
-from PIL import Image as pimage
-from PIL import ImageTk as pimagetk
 from json import loads
 from typing import List
 import os
@@ -157,9 +155,7 @@ if __name__ == '__main__':
     root = Tk()
     app = App(root)
     root.title('Reinpycement 0.1')
-
-    ico = pimage.open('icon.png')
-    photo = pimagetk.PhotoImage(ico)
-    root.iconphoto(False, photo)
+    if 'icon.ico' in os.listdir():
+        root.iconbitmap("icon.ico")
 
     root.mainloop()

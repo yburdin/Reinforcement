@@ -31,7 +31,7 @@ class SCADData:
     def import_force_directions_from_txt_data(self, data: str) -> pd.DataFrame:
         force_direction_table = pd.DataFrame(columns=('Rotation_type', 'Direction'))
 
-        force_axis = re.search(r'\(33/[\s\w=:\-/.+"]+\)', data).group().replace('\n', ' ')
+        force_axis = re.search(r'\(33/[\s\w=:\-/.+",]+\)', data).group().replace('\n', ' ')
         force_axis = force_axis.split('/')
         force_axis = [line.replace('  ', ' ').strip() for line in force_axis if 'EX' in line or 'EY' in line]
 

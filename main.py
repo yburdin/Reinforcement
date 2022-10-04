@@ -7,7 +7,7 @@ import os
 
 
 if __name__ == '__main__':
-    example_name = 'example_5'
+    example_name = 'example_4'
 
     if example_name == 'example_5':
         asf_path = f'examples/{example_name}/1 эт.asf'
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     reinforcement_scheme.load_anchorage_lengths(f'examples/{example_name}/{csv_file}')
     reinforcement_scheme.make_combined_table()
 
-    plotter = Plotter()
+    # plotter = Plotter()
 
     for loc in [
         'Top_X',
@@ -48,9 +48,9 @@ if __name__ == '__main__':
         reinforcement_scheme.transfer_reinforcement_direction_to_zones()
         reinforcement_scheme.set_zones_reinforcement()
 
-        plotter.plot_reinforcement_2d(reinforcement, loc,
-                                      min_value=reinforcement_scheme.background_reinforcement_intensity)
-        plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc, plot_directions=True)
+        # plotter.plot_reinforcement_2d(reinforcement, loc,
+        #                               min_value=reinforcement_scheme.background_reinforcement_intensity)
+        # plotter.plot_reinforcement_zones_2d(reinforcement_scheme, loc, plot_directions=True)
 
     drawer = Drawer()
     drawer.dxf_draw_zones(reinforcement_scheme, f'examples/{example_name}/{example_name}.dxf')

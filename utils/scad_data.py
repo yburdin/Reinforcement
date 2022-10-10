@@ -135,7 +135,7 @@ class SCADData:
         nodes_data = re.search(r'\(4/[\d\s\w:/".,\-]+\)', data).group().replace('\n', ' ')
         while '  ' in nodes_data:
             nodes_data = nodes_data.replace('  ', ' ')
-        nodes_data = nodes_data.replace('(4/', '').split('/')
+        nodes_data = nodes_data.replace('(4/', '').replace(')', '').split('/')
 
         repeat_operators_positions = [-1] + [i for i in range(len(nodes_data)) if 'r' in nodes_data[i]] + [-1]
         for i in range(1, len(repeat_operators_positions)):
@@ -143,6 +143,9 @@ class SCADData:
             pos = repeat_operators_positions[i]
 
             nodes_data_i = nodes_data[pos_prev:pos]
+            if len(nodes_data_i) == 0:
+                continue
+
             nodes_data_i = [list(map(float, node.strip().split(' '))) for node in nodes_data_i]
             nodes_data_i = list(map(self.add_zeros, nodes_data_i))
 

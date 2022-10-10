@@ -7,7 +7,8 @@ class ReinforcementZone:
     def __init__(self):
         self.elements = np.array([])
         self.nodes = np.array([])
-        self.reinforcement_direction = [0, 0, 0]
+        self.reinforcement_direction_vector = [0, 0, 0]
+        self.reinforcement_direction = None
         self.bounding_rectangle = None
         self.max_intensity = None
         self.background_reinforcement_intensity = None
@@ -28,7 +29,7 @@ class ReinforcementZone:
         self.nodes = np.union1d(self.nodes, nodes)
 
     def set_reinforcement_direction(self, x: float, y: float, z: float):
-        self.reinforcement_direction[0:3] = x, y, z
+        self.reinforcement_direction_vector[0:3] = x, y, z
 
     def set_bounding_rectangle(self, points: Iterable):
         points = np.array(points)
@@ -44,7 +45,7 @@ class ReinforcementZone:
 
     @property
     def dimensions(self):
-        rotation_matrix = self.make_rotation_matrix_2d(*self.reinforcement_direction[:2])
+        rotation_matrix = self.make_rotation_matrix_2d(*self.reinforcement_direction_vector[:2])
         points = (np.linalg.inv(rotation_matrix) @ self.bounding_rectangle.T).T
         x_dim = abs(points[:, 0].max() - points[:, 0].min())
         y_dim = abs(points[:, 1].max() - points[:, 1].min())
@@ -84,10 +85,20 @@ class ReinforcementZone:
 
         anchorage_length_mm = self.anchorage_lengths.loc[diameter, 'Length']
 
-        x_mm_rounded = np.ceil(x_mm / 10) * 10
-        x_mm_adjusted = x_mm_rounded + 2 * anchorage_length_mm
+        if self.reinforcement_direction == 'X':
+            x_mm_rounded = np.ceil(x_mm / 10) * 10
+            x_mm_adjusted = x_mm_rounded + 2 * anchorage_length_mm
 
-        y_mm_adjusted = ((y_mm // step) + 1) * step
+            y_mm_adjusted = ((y_mm // step) + 1) * step
+
+        elif self.reinforcement_direction == 'Y':
+            y_mm_rounded = np.ceil(y_mm / 10) * 10
+            y_mm_adjusted = y_mm_rounded + 2 * anchorage_length_mm
+
+            x_mm_adjusted = ((x_mm // step) + 1) * step
+
+        else:
+            raise ValueError('Reinforcement direction error')
 
         return x_mm_adjusted / 1000, y_mm_adjusted / 1000
 
@@ -95,7 +106,7 @@ class ReinforcementZone:
     def bounding_rectangle_adjusted(self) -> np.array:
         scale = [self.dimensions_adjusted[i] / self.dimensions[i] for i in range(2)]
 
-        rotation_matrix = self.make_rotation_matrix_2d(*self.reinforcement_direction[:2])
+        rotation_matrix = self.make_rotation_matrix_2d(*self.reinforcement_direction_vector[:2])
 
         scale_matrix = np.array([[scale[0], 0],
                                  [0, scale[1]]])
@@ -121,6 +132,6 @@ class ReinforcementZone:
 
     @property
     def alpha(self) -> float:
-        x, y = self.reinforcement_direction[:2]
+        x, y = self.reinforcement_direction_vector[:2]
         tan_alpha = y / (x + 1e-9)
         return np.arctan(tan_alpha)

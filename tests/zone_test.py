@@ -14,7 +14,7 @@ class ZoneTest(unittest.TestCase):
                                                 [5, 10],
                                                 [0, 10]
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             self.assertAlmostEqual(zone.dimensions[0], 10)
             self.assertAlmostEqual(zone.dimensions[1], 5)
@@ -26,7 +26,7 @@ class ZoneTest(unittest.TestCase):
                                                 [0, 10],
                                                 [0, 0],
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             self.assertAlmostEqual(zone.dimensions[0], 10)
             self.assertAlmostEqual(zone.dimensions[1], 5)
@@ -38,7 +38,7 @@ class ZoneTest(unittest.TestCase):
                                                 [0, 0],
                                                 [5, 0],
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             self.assertAlmostEqual(zone.dimensions[0], 10)
             self.assertAlmostEqual(zone.dimensions[1], 5)
@@ -50,7 +50,7 @@ class ZoneTest(unittest.TestCase):
                                                 [5, 0],
                                                 [5, 10],
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             self.assertAlmostEqual(zone.dimensions[0], 10)
             self.assertAlmostEqual(zone.dimensions[1], 5)
@@ -62,7 +62,7 @@ class ZoneTest(unittest.TestCase):
                                                 [-10.11922758, -13.74220324],
                                                 [-10.36596384, -14.16956278]])
 
-            zone.reinforcement_direction = [0.246736, 0.42736, 0.0]
+            zone.reinforcement_direction_vector = [0.246736, 0.42736, 0.0]
 
             self.assertAlmostEqual(zone.dimensions[0], 0.493472, delta=0.001)
             self.assertAlmostEqual(zone.dimensions[1], 0.370675, delta=0.001)
@@ -96,13 +96,14 @@ class ZoneTest(unittest.TestCase):
                                                 [0.1, 10],
                                                 [0, 10]
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[2000, 2000, 2000], columns=('Length',))
 
             zone.background_reinforcement_intensity = 3.93
             zone.background_reinforcement = {'diameter': 10, 'step': 200}
             zone.max_intensity = 3.93 + 1.40
+            zone.reinforcement_direction = 'X'
 
             self.assertAlmostEqual(zone.dimensions_adjusted[0], 14, delta=0.1)
             self.assertAlmostEqual(zone.dimensions_adjusted[1], 0.2, delta=0.01)
@@ -114,16 +115,55 @@ class ZoneTest(unittest.TestCase):
                                                 [-10.11922758, -13.74220324],
                                                 [-10.36596384, -14.16956278]])
 
-            zone.reinforcement_direction = [0.246736, 0.42736, 0.0]
+            zone.reinforcement_direction_vector = [0.246736, 0.42736, 0.0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[310, 350, 400], columns=('Length',))
 
             zone.background_reinforcement_intensity = 1.413716694115407
             zone.background_reinforcement = {'diameter': 6, 'step': 200}
             zone.max_intensity = 1.63
+            zone.reinforcement_direction = 'X'
 
             self.assertAlmostEqual(zone.dimensions_adjusted[0], 1.120, delta=0.01)
             self.assertAlmostEqual(zone.dimensions_adjusted[1], 0.4, delta=0.01)
+
+        with self.subTest('Testcase 3'):
+            zone = ReinforcementZone()
+            zone.bounding_rectangle = np.array([[0, 0],
+                                                [0.99, 0],
+                                                [0.99, 0.99],
+                                                [0, 0.99]
+                                                ])
+            zone.reinforcement_direction_vector = [0, 1, 0]
+
+            zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[500, 500, 500], columns=('Length',))
+
+            zone.background_reinforcement_intensity = 3.93
+            zone.background_reinforcement = {'diameter': 10, 'step': 200}
+            zone.max_intensity = 3.93 + 1.40
+            zone.reinforcement_direction = 'Y'
+
+            self.assertAlmostEqual(zone.dimensions_adjusted[0], 1, delta=0.01)
+            self.assertAlmostEqual(zone.dimensions_adjusted[1], 2, delta=0.01)
+
+        with self.subTest('Testcase 4'):
+            zone = ReinforcementZone()
+            zone.bounding_rectangle = np.array([[0, 0],
+                                                [0.99, 0],
+                                                [0.99, 0.99],
+                                                [0, 0.99]
+                                                ])
+            zone.reinforcement_direction_vector = [0, 1, 0]
+
+            zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[500, 500, 500], columns=('Length',))
+
+            zone.background_reinforcement_intensity = 3.93
+            zone.background_reinforcement = {'diameter': 10, 'step': 200}
+            zone.max_intensity = 3.93 + 1.40
+            zone.reinforcement_direction = 'X'
+
+            self.assertAlmostEqual(zone.dimensions_adjusted[0], 2, delta=0.1)
+            self.assertAlmostEqual(zone.dimensions_adjusted[1], 1, delta=0.01)
 
     def test_bounding_rectangle_adjusted(self):
         with self.subTest('Testcase 1'):
@@ -133,7 +173,7 @@ class ZoneTest(unittest.TestCase):
                                                 [0.1, 1],
                                                 [0, 1]
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[1000, 1000, 1000], columns=('Length',))
 
@@ -160,7 +200,7 @@ class ZoneTest(unittest.TestCase):
                                                 [0, 1],
                                                 [0, 0],
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[1000, 1000, 1000], columns=('Length',))
 
@@ -187,7 +227,7 @@ class ZoneTest(unittest.TestCase):
                                                 [0, 0],
                                                 [0.1, 0],
                                                 ])
-            zone.reinforcement_direction = [0, 3, 0]
+            zone.reinforcement_direction_vector = [0, 3, 0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[1000, 1000, 1000], columns=('Length',))
 
@@ -214,7 +254,7 @@ class ZoneTest(unittest.TestCase):
                                                 [5.25, 1.25],
                                                 [3.75, -0.25]])
 
-            zone.reinforcement_direction = [3.0, 3.0, 0]
+            zone.reinforcement_direction_vector = [3.0, 3.0, 0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[310, 350, 400], columns=('Length',))
 
@@ -241,7 +281,7 @@ class ZoneTest(unittest.TestCase):
                                                 [-10.11922758, -13.74220324],
                                                 [-10.36596384, -14.16956278]])
 
-            zone.reinforcement_direction = [0.246736, 0.42736, 0.0]
+            zone.reinforcement_direction_vector = [0.246736, 0.42736, 0.0]
 
             zone.anchorage_lengths = pd.DataFrame(index=[6, 8, 10], data=[310, 350, 400], columns=('Length',))
 

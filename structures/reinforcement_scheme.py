@@ -103,7 +103,7 @@ class ReinforcementScheme:
             for zone in self.reinforcement_zones[location][:]:
                 zone_directions = self.elements_table.loc[zone.elements, ['Rotation_type', 'Direction']]
 
-                if all([coordinate != 0 for coordinate in zone.reinforcement_direction]):
+                if all([coordinate != 0 for coordinate in zone.reinforcement_direction_vector]):
                     continue
 
                 if (len(np.unique(np.stack(zone_directions.Direction.values), axis=0)) == 1 and
@@ -122,6 +122,11 @@ class ReinforcementScheme:
                         zone.set_reinforcement_direction(*ex_direction)
 
                     zone.set_bounding_rectangle(self.get_zone_bounding_rectangle(zone))
+
+                    if 'X' in location:
+                        zone.reinforcement_direction = 'X'
+                    elif 'Y' in location:
+                        zone.reinforcement_direction = 'Y'
 
                 elif len(zone_directions.Rotation_type.unique()) == 1:
                     rotation_type = zone_directions.Rotation_type.unique()[0]
@@ -143,6 +148,11 @@ class ReinforcementScheme:
 
                         new_zone.set_bounding_rectangle(self.get_zone_bounding_rectangle(new_zone))
 
+                        if 'X' in location:
+                            new_zone.reinforcement_direction = 'X'
+                        elif 'Y' in location:
+                            new_zone.reinforcement_direction = 'Y'
+
                         self.reinforcement_zones[location].append(new_zone)
 
                     self.reinforcement_zones[location].remove(zone)
@@ -150,7 +160,7 @@ class ReinforcementScheme:
     def get_zone_bounding_rectangle(self, zone: ReinforcementZone) -> np.array:
         zone_nodes = self.nodes_table.loc[zone.nodes]
 
-        rotation_matrix = self.make_rotation_matrix_2d(*zone.reinforcement_direction[:2])
+        rotation_matrix = self.make_rotation_matrix_2d(*zone.reinforcement_direction_vector[:2])
         zone_nodes_coordinates = zone_nodes.loc[:, ['X', 'Y']]
         local_coordinates = (np.linalg.inv(rotation_matrix) @ zone_nodes_coordinates.values.T).T
 

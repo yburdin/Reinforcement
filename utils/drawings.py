@@ -17,6 +17,12 @@ class Drawer:
         diameter, step = scheme.background_reinforcement["diameter"], scheme.background_reinforcement["step"]
         msp.add_text(f'Фон {diameter} шаг {step}', dxfattribs={'layer': 'TEXT', 'height': 0.2}).set_placement((0, 0))
 
+        doc.layers.add('POLYGONS', color=randint(10, 230))
+        for poly in scheme.polygons:
+            for i in range(1, len(poly)):
+                msp.add_line(tuple(poly[i-1][:2]), tuple(poly[i][:2]), dxfattribs={'layer': 'POLYGONS'})
+            msp.add_line(tuple(poly[-1][:2]), tuple(poly[0][:2]), dxfattribs={'layer': 'POLYGONS'})
+
         for location in scheme.reinforcement_zones:
             doc.layers.add(location, color=randint(10, 230))
             doc.layers.add(f'TEXT_{location}', color=randint(10, 230))

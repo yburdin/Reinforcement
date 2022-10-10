@@ -26,10 +26,12 @@ class ReinforcementScheme:
         self.background_reinforcement = {'diameter': 0,
                                          'step': 0}
         self.anchorage_lengths = None
+        self.polygons = []
 
     @Decorators.timed
     def load_reinforcement_data(self, reinforcement_data: ReinforcementData):
         self.reinforcement_data = reinforcement_data
+        self.polygons = reinforcement_data.polygons
 
     def load_anchorage_lengths(self, path: str):
         if '.csv' in path:
@@ -245,8 +247,8 @@ class ReinforcementScheme:
         self.elements_table = elements_table
         self.nodes_table = self.reinforcement_data.nodes_table
 
-        self.reinforcement_data = None
-        self.scad_data = None
+        # self.reinforcement_data = None
+        # self.scad_data = None
 
     @Decorators.timed
     def make_combined_table_test(self):

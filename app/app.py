@@ -154,7 +154,7 @@ class App:
 if __name__ == '__main__':
     root = Tk()
     app = App(root)
-    root.title('Reinpycement 0.1')
+    root.title('Reinpycement 0.4')
     if 'icon.ico' in os.listdir():
         root.iconbitmap("icon.ico")
 

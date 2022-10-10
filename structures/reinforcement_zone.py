@@ -59,10 +59,12 @@ class ReinforcementZone:
         additional_reinforcement_dict = {}
 
         step = self.background_reinforcement['step']
+        background_diameter = self.background_reinforcement['diameter']
         for _ in range(3):
             if step in calculator.possible_steps:
                 additional_reinforcement = calculator.reinforcement_from_intensity(additional_intensity,
-                                                                                   step)
+                                                                                   step,
+                                                                                   min_diameter=background_diameter)
                 diameter, step = additional_reinforcement['diameter'], additional_reinforcement['step']
                 intensity = calculator.intensity_from_diameter_and_step(diameter, step)
                 additional_reinforcement_dict[intensity] = additional_reinforcement

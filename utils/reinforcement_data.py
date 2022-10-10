@@ -1,5 +1,8 @@
+import numpy as np
 import pandas as pd
 from utils.decorators import Decorators
+from typing import List
+import re
 
 
 class ReinforcementData:
@@ -8,12 +11,16 @@ class ReinforcementData:
         self.elements_table = pd.Series(name='Nodes', dtype=object)
         self.reinforcement_table = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',
                                                          'Top_X', 'Top_Y', 'Lat_X', 'Bot_X', 'Bot_Y', 'Lat_Y'))
+        self.polygons = []
 
     @Decorators.timed
     def import_asf(self, path: str) -> None:
         with open(path) as f:
-            data = f.read().split('\n')
+            data = f.read()
 
+        self.polygons = self.import_polygons(data)
+
+        data = data.split('\n')
         assert data[0] == '1.0 Nemetschek ALLPLAN', 'Only 1.0 Nemetschek ALLPLAN files are supported'
 
         line_type = None
@@ -49,6 +56,28 @@ class ReinforcementData:
     def import_reinforcement_line(self, line: str):
         split_line = [item for item in line.split(' ') if item != '']
         self.reinforcement_table.loc[len(self.reinforcement_table)] = [float(item) for item in (split_line[3:12])]
+
+    @staticmethod
+    def import_polygons(data: str) -> List[np.array]:
+        return_polygons = []
+
+        polygons = re.findall(r'GL POLY \d+', data)
+
+        positions = []
+        for poly in polygons:
+            if len(positions) == 0:
+                positions.append(data.index(poly))
+            else:
+                positions.append(data.index(poly, positions[-1] + 1))
+
+        for i, poly in enumerate(polygons):
+            position = positions[i]
+            n_points = int(re.search(r'\d+', poly).group())
+            polygon_points = data[position:].split('\n')[1:n_points + 1]
+            polygon_points = [list(map(float, re.findall(r'[\d.\-e]+', point_line))) for point_line in polygon_points]
+            return_polygons.append(np.array(polygon_points))
+
+        return return_polygons
 
     @Decorators.timed
     def calculate_element_centers(self):

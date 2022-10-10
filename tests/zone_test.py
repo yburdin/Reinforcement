@@ -76,7 +76,7 @@ class ZoneTest(unittest.TestCase):
 
             zone.max_intensity = 3.93 + 1.40
 
-            self.assertEqual(zone.additional_reinforcement['diameter'], 6)
+            self.assertEqual(zone.additional_reinforcement['diameter'], 10)
             self.assertEqual(zone.additional_reinforcement['step'], 200)
 
         with self.subTest('Testcase 2'):
@@ -85,8 +85,35 @@ class ZoneTest(unittest.TestCase):
 
             zone.max_intensity = 3.93 + 2.82
 
-            self.assertEqual(zone.additional_reinforcement['diameter'], 6)
+            self.assertEqual(zone.additional_reinforcement['diameter'], 10)
+            self.assertEqual(zone.additional_reinforcement['step'], 200)
+
+        with self.subTest('Testcase 3'):
+            zone.background_reinforcement_intensity = 3.93
+            zone.background_reinforcement = {'diameter': 10, 'step': 200}
+
+            zone.max_intensity = 3.93 + 5.64
+
+            self.assertEqual(zone.additional_reinforcement['diameter'], 12)
+            self.assertEqual(zone.additional_reinforcement['step'], 200)
+
+        with self.subTest('Testcase 4'):
+            zone.background_reinforcement_intensity = 2.51
+            zone.background_reinforcement = {'diameter': 8, 'step': 200}
+
+            zone.max_intensity = 2.51 + 5.02
+
+            self.assertEqual(zone.additional_reinforcement['diameter'], 8)
             self.assertEqual(zone.additional_reinforcement['step'], 100)
+
+        with self.subTest('Testcase 5'):
+            zone.background_reinforcement_intensity = 1.41
+            zone.background_reinforcement = {'diameter': 6, 'step': 200}
+
+            zone.max_intensity = 1.41 + 3.92
+
+            self.assertEqual(zone.additional_reinforcement['diameter'], 10)
+            self.assertEqual(zone.additional_reinforcement['step'], 200)
 
     def test_adjusted_dimensions(self):
         with self.subTest('Testcase 1'):

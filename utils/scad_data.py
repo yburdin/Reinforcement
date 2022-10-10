@@ -31,7 +31,7 @@ class SCADData:
     def import_force_directions_from_txt_data(self, data: str) -> pd.DataFrame:
         force_direction_table = pd.DataFrame(columns=('Rotation_type', 'Direction'))
 
-        force_axis = re.search(r'\(33/[\s\w=:\-/.+"]+\)', data).group().replace('\n', ' ')
+        force_axis = re.search(r'\(33/[\s\w=:\-/.+",]+\)', data).group().replace('\n', ' ')
         force_axis = force_axis.split('/')
         force_axis = [line.replace('  ', ' ').strip() for line in force_axis if 'EX' in line or 'EY' in line]
 
@@ -152,10 +152,10 @@ class SCADData:
             k_y = 0 if len(k_list) < 2 else k_list[1]
             k_z = 0 if len(k_list) < 3 else k_list[2]
 
-            for _ in range(n_2):
-                new_nodes_table.loc[len(new_nodes_table)] = (new_nodes_table.iloc[-1].X + k_x,
-                                                             new_nodes_table.iloc[-1].Y + k_y,
-                                                             new_nodes_table.iloc[-1].Z + k_z)
+            for i_repeat in range(n_2):
+                new_nodes_table.loc[max(nodes_indices) + i_repeat + 1] = (new_nodes_table.iloc[-1].X + k_x,
+                                                                          new_nodes_table.iloc[-1].Y + k_y,
+                                                                          new_nodes_table.iloc[-1].Z + k_z)
 
             nodes_table = pd.concat([nodes_table, new_nodes_table], axis=0)
 
@@ -197,7 +197,7 @@ class SCADData:
     @staticmethod
     def scad_repeat_line_operator(s: str) -> tuple:
         try:
-            s = re.search(r'\d[\d\s]+:[\d\s.\-]+', s).group()
+            s = re.search(r'\d[\d\s]+:[\d\s.\-e]+', s).group()
         except AttributeError as e:
             raise e
 

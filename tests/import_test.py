@@ -1,4 +1,7 @@
+import numpy as np
+
 from utils.scad_data import SCADData
+from utils.reinforcement_data import ReinforcementData
 from structures.reinforcement_scheme import ReinforcementScheme
 import unittest
 import pandas as pd
@@ -84,6 +87,28 @@ class ImportTest(unittest.TestCase):
             self.assertEqual(centers.loc[0].Element_center_X, 25)
             self.assertEqual(centers.loc[0].Element_center_Y, 50)
             self.assertEqual(centers.loc[0].Element_center_Z, 0)
+
+    def test_import_polygons(self):
+        data = 'GL POLY 4\n   1.313   8.849   9.990\n   0.713   8.849   9.990\n   0.713   6.949   9.990\n   1.313   ' \
+               '6.949   9.990\nGL POLY 4\n   0.963   4.769   9.990\n   0.713   4.769   9.990\n   0.713   4.369   ' \
+               '9.990\n   0.963   4.369   9.990\nGP KNOT 50'
+        expected_result = [
+            np.array([[1.313, 8.849, 9.990],
+                      [0.713, 8.849, 9.990],
+                      [0.713, 6.949, 9.990],
+                      [1.313, 6.949, 9.990]
+                      ]),
+            np.array([[0.963, 4.769, 9.990],
+                      [0.713, 4.769, 9.990],
+                      [0.713, 4.369, 9.990],
+                      [0.963, 4.369, 9.990]
+                      ]),
+        ]
+
+        for n in range(len(expected_result)):
+            for k in range(len(expected_result[n])):
+                with self.subTest(f'{n=}, {k=}'):
+                    self.assertCountEqual(ReinforcementData.import_polygons(data)[n][k], expected_result[n][k])
 
 
 if __name__ == '__main__':

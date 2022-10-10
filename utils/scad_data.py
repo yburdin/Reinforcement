@@ -19,11 +19,16 @@ class SCADData:
         self.nodes_table = self.import_nodes_form_txt_data(data)
         self.elements_table = self.import_elements_from_txt_data(data)
 
+        for element_type in self.elements_table.Element_type.unique():
+            nodes = np.stack(self.elements_table.query(f'Element_type == {element_type}').Nodes)
+            node_min_index = np.min(nodes)
+            node_max_index = np.max(nodes)
+
+            for node_index in [node_min_index, node_max_index]:
+                assert node_index in self.nodes_table.index, f'Node {node_index} not in Nodes table'
+
         force_direction_table = self.import_force_directions_from_txt_data(data)
         self.elements_table = pd.concat([self.elements_table, force_direction_table], axis=1)
-
-        # element_centers_table = self.calculate_element_centers(self.elements_table.Nodes, self.nodes_table)
-        # self.elements_table = pd.concat([self.elements_table, element_centers_table], axis=1)
 
         self.reinforcement_groups = self.import_reinforcement_groups_from_txt_data(data)
 
@@ -113,7 +118,7 @@ class SCADData:
                         new_elements_table.iloc[-1].Stiffness + k_stiffness)
 
                     new_nodes_series.loc[index_of_last + 1] = [new_nodes_series.iloc[-1][i] + int(k_nodes[i])
-                                                                   for i in range(len(k_nodes))]
+                                                               for i in range(len(k_nodes))]
 
             elements_table = pd.concat([elements_table, new_elements_table], axis=0)
             nodes_series = pd.concat([nodes_series, new_nodes_series], axis=0)
@@ -132,7 +137,7 @@ class SCADData:
             nodes_data = nodes_data.replace('  ', ' ')
         nodes_data = nodes_data.replace('(4/', '').split('/')
 
-        repeat_operators_positions = [-1] + [i for i in range(len(nodes_data)) if 'r' in nodes_data[i]]
+        repeat_operators_positions = [-1] + [i for i in range(len(nodes_data)) if 'r' in nodes_data[i]] + [-1]
         for i in range(1, len(repeat_operators_positions)):
             pos_prev = repeat_operators_positions[i-1] + 1
             pos = repeat_operators_positions[i]
@@ -145,17 +150,18 @@ class SCADData:
             nodes_indices = list(range(len(nodes_table), len(nodes_table) + len(nodes_coordinates)))
             new_nodes_table = pd.DataFrame(index=nodes_indices, data=nodes_coordinates, columns=('X', 'Y', 'Z'))
 
-            n_list, k_list = self.scad_repeat_line_operator(nodes_data[pos])
+            if pos != -1:
+                n_list, k_list = self.scad_repeat_line_operator(nodes_data[pos])
 
-            n_2 = n_list[1]
-            k_x = k_list[0]
-            k_y = 0 if len(k_list) < 2 else k_list[1]
-            k_z = 0 if len(k_list) < 3 else k_list[2]
+                n_2 = n_list[1]
+                k_x = k_list[0]
+                k_y = 0 if len(k_list) < 2 else k_list[1]
+                k_z = 0 if len(k_list) < 3 else k_list[2]
 
-            for i_repeat in range(n_2):
-                new_nodes_table.loc[max(nodes_indices) + i_repeat + 1] = (new_nodes_table.iloc[-1].X + k_x,
-                                                                          new_nodes_table.iloc[-1].Y + k_y,
-                                                                          new_nodes_table.iloc[-1].Z + k_z)
+                for i_repeat in range(n_2):
+                    new_nodes_table.loc[max(nodes_indices) + i_repeat + 1] = (new_nodes_table.iloc[-1].X + k_x,
+                                                                              new_nodes_table.iloc[-1].Y + k_y,
+                                                                              new_nodes_table.iloc[-1].Z + k_z)
 
             nodes_table = pd.concat([nodes_table, new_nodes_table], axis=0)
 

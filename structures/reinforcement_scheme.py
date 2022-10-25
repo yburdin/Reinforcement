@@ -59,7 +59,7 @@ class ReinforcementScheme:
             first_element = reinforced_elements_indices.pop(0)
             first_element_nodes = self.elements_table.loc[first_element].Nodes
 
-            zone = ReinforcementZone()
+            zone = ReinforcementZone(self.calculator)
             zone.add_one_element_to_zone(first_element, first_element_nodes)
 
             while True:
@@ -142,7 +142,7 @@ class ReinforcementScheme:
                         new_zone_nodes = np.stack(self.elements_table.loc[new_zone_elements].Nodes.values)
                         new_zone_nodes = np.unique(new_zone_nodes)
 
-                        new_zone = ReinforcementZone()
+                        new_zone = ReinforcementZone(self.calculator)
                         new_zone.add_multiple_elements_to_zone(new_zone_elements, new_zone_nodes)
 
                         if rotation_type == 'EX':

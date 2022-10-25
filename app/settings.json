@@ -4,6 +4,8 @@
   "path_to_csv_file": "D:/git/Reinforcement/app/example/example.csv",
   "path_to_dxf_output_folder": "D:/git/Reinforcement/app/example/",
   "background_reinforcement_intensity": 1.41,
+  "possible_steps": [100, 200],
+  "possible_diameters": [8, 12, 14, 16, 20, 25],
   "reinforcement_groups": [
     "Плита"
   ]

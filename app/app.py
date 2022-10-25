@@ -29,7 +29,7 @@ class App:
     def load_json(self):
         try:
             if self.working_directory is None:
-                initial_dir = '/'
+                initial_dir = os.getcwd()
             else:
                 initial_dir = self.working_directory
 
@@ -44,6 +44,7 @@ class App:
                 try:
                     with open(self.json_path, encoding='utf-8') as f:
                         settings = loads(f.read())
+                        self.working_directory = '/'.join(self.json_path.split('/')[0:-1]) + '/'
                 except FileNotFoundError:
                     raise AssertionError('JSON file not found')
 
@@ -87,6 +88,13 @@ class App:
                 reinforcement.import_asf(asf_files[asf_file_index])
 
                 reinforcement_scheme = ReinforcementScheme()
+
+                if 'possible_steps' in self.settings and 'possible_diameters' in self.settings:
+                    possible_steps = self.settings['possible_steps']
+                    possible_diameters = self.settings['possible_diameters']
+                    reinforcement_scheme.calculator.set_possible_reinforcement(steps=possible_steps,
+                                                                               diameters=possible_diameters)
+
                 reinforcement_scheme.load_reinforcement_data(reinforcement)
                 reinforcement_scheme.set_background_reinforcement(auto=False,
                                                                   intensity=background_reinforcement_intensity)
@@ -125,27 +133,45 @@ class App:
     def place_settings_labels(master: Tk, settings: dict):
         line_height = 21
         height = line_height * 11
+        row_n = 0
 
-        Label(master, text='Путь к папке с asf файлами:', anchor="nw", width=500).grid(row=0, column=0)
-        Label(master, text=f'\t{settings["path_to_asf_folder"]}', anchor="nw", width=500).grid(row=1, column=0)
+        Label(master, text='Путь к папке с asf файлами:', anchor="nw", width=500).grid(row=row_n, column=0)
+        Label(master, text=f'\t{settings["path_to_asf_folder"]}', anchor="nw", width=500).grid(row=row_n+1, column=0)
 
-        Label(master, text='Путь к txt файлу:', anchor="nw", width=500).grid(row=2, column=0)
-        Label(master, text=f'\t{settings["path_to_txt_file"]}', anchor="nw", width=500).grid(row=3, column=0)
+        Label(master, text='Путь к txt файлу:', anchor="nw", width=500).grid(row=row_n+2, column=0)
+        Label(master, text=f'\t{settings["path_to_txt_file"]}', anchor="nw", width=500).grid(row=row_n+3, column=0)
 
-        Label(master, text='Путь к csv-таблице длин анкеровки:', anchor="nw", width=500).grid(row=4, column=0)
-        Label(master, text=f'\t{settings["path_to_csv_file"]}', anchor="nw", width=500).grid(row=5, column=0)
+        Label(master, text='Путь к csv-таблице длин анкеровки:', anchor="nw", width=500).grid(row=row_n+4, column=0)
+        Label(master, text=f'\t{settings["path_to_csv_file"]}', anchor="nw", width=500).grid(row=row_n+5, column=0)
 
-        Label(master, text='Путь для сохранения dxf файлов:', anchor="nw", width=500).grid(row=6, column=0)
-        Label(master, text=f'\t{settings["path_to_dxf_output_folder"]}', anchor="nw", width=500).grid(row=7, column=0)
+        Label(master, text='Путь для сохранения dxf файлов:', anchor="nw", width=500).grid(row=row_n+6, column=0)
+        Label(master, text=f'\t{settings["path_to_dxf_output_folder"]}', anchor="nw", width=500).grid(row=row_n+7,
+                                                                                                      column=0)
 
         Label(master, text=f'Интенсивность фонового армирования: {settings["background_reinforcement_intensity"]}',
-              anchor="nw", width=500).grid(row=8, column=0)
+              anchor="nw", width=500).grid(row=row_n+8, column=0)
+
+        row_n = 8
+        if 'possible_steps' in settings:
+            Label(master, text=f'Возможные шаги армирования: {settings["possible_steps"]}',
+                  anchor="nw", width=500).grid(row=row_n+1, column=0)
+            row_n += 1
+            height += line_height
+
+        if 'possible_diameters' in settings:
+            Label(master, text=f'Возможные диаметры арматуры: {settings["possible_diameters"]}',
+                  anchor="nw", width=500).grid(row=row_n+1, column=0)
+            row_n += 1
+            height += line_height
+
         Label(master, text='Названия групп армирования из txt файла\n'
                            '(должны соответствовать именам файлов из папки с asf):',
-              anchor="nw", width=500, justify='left').grid(row=10, column=0)
+              anchor="nw", width=500, justify='left').grid(row=row_n+2, column=0)
+        row_n += 2
 
         for n, group in enumerate(settings["reinforcement_groups"]):
-            Label(master, text=f'\t{group}', anchor="nw", width=500, justify='left').grid(row=11+n, column=0)
+            row_n += 1
+            Label(master, text=f'\t{group}', anchor="nw", width=500, justify='left').grid(row=row_n+n, column=0)
             height += line_height
 
         master.geometry(f'520x{height}')
@@ -154,7 +180,7 @@ class App:
 if __name__ == '__main__':
     root = Tk()
     app = App(root)
-    root.title('Reinpycement 0.5')
+    root.title('Reinpycement 0.6')
     if 'icon.ico' in os.listdir():
         root.iconbitmap("icon.ico")
 

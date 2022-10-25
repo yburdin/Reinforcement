@@ -1,10 +1,10 @@
-from typing import Iterable
+from typing import Iterable, Optional
 from utils.reinforcement_calculator import ReinforcementCalculator
 import numpy as np
 
 
 class ReinforcementZone:
-    def __init__(self):
+    def __init__(self, calculator: Optional[ReinforcementCalculator] = None):
         self.elements = np.array([])
         self.nodes = np.array([])
         self.reinforcement_direction_vector = [0, 0, 0]
@@ -14,6 +14,7 @@ class ReinforcementZone:
         self.background_reinforcement_intensity = None
         self.background_reinforcement = None
         self.anchorage_lengths = None
+        self.calculator = calculator if calculator else ReinforcementCalculator()
 
     def add_one_element_to_zone(self, element: int, nodes: Iterable):
         if element not in self.elements:
@@ -54,19 +55,20 @@ class ReinforcementZone:
 
     @property
     def additional_reinforcement(self) -> dict:
-        calculator = ReinforcementCalculator()
         additional_intensity = self.max_intensity - self.background_reinforcement_intensity
         additional_reinforcement_dict = {}
 
         step = self.background_reinforcement['step']
         background_diameter = self.background_reinforcement['diameter']
         for _ in range(3):
-            if step in calculator.possible_steps:
-                additional_reinforcement = calculator.reinforcement_from_intensity(additional_intensity,
-                                                                                   step,
-                                                                                   min_diameter=background_diameter)
+            if step in self.calculator.possible_steps:
+                additional_reinforcement = self.calculator.reinforcement_from_intensity(
+                    additional_intensity,
+                    step,
+                    min_diameter=background_diameter)
+
                 diameter, step = additional_reinforcement['diameter'], additional_reinforcement['step']
-                intensity = calculator.intensity_from_diameter_and_step(diameter, step)
+                intensity = self.calculator.intensity_from_diameter_and_step(diameter, step)
                 additional_reinforcement_dict[intensity] = additional_reinforcement
 
                 step //= 2

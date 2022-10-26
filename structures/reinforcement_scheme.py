@@ -298,14 +298,18 @@ class ReinforcementScheme:
         return self.calculator.intensity_from_diameter_and_step(self.background_reinforcement['diameter'],
                                                                 self.background_reinforcement['step'])
 
-    @staticmethod
     @Decorators.timed
-    def calculate_element_centers(element_nodes: pd.Series, nodes_table: pd.DataFrame) -> pd.DataFrame:
-        centers_table = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',))
+    def calculate_element_centers(self, element_nodes: pd.Series, nodes_table: pd.DataFrame) -> pd.DataFrame:
+        element_centers = list(map(self.calculate_single_element_center,
+                                   element_nodes.values,
+                                   [nodes_table] * len(element_nodes.values)))
 
-        for n, element in enumerate(element_nodes.index):
-            nodes = element_nodes.loc[element]
-            nodes_coordinates = nodes_table.loc[nodes, ['X', 'Y', 'Z']]
-            centers_table.loc[element] = nodes_coordinates.mean().values
+        centers_table = pd.DataFrame(data=element_centers, index=element_nodes.index,
+                                     columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z',))
 
         return centers_table
+
+    @staticmethod
+    def calculate_single_element_center(nodes, nodes_table):
+        coordinates = nodes_table.loc[nodes, ['X', 'Y', 'Z']].values.astype(float)
+        return np.mean(coordinates, axis=0)

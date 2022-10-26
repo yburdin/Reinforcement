@@ -20,42 +20,20 @@ class ReinforcementData:
 
         self.polygons = self.import_polygons(data)
 
-        data = data.split('\n')
-        assert data[0] == '1.0 Nemetschek ALLPLAN', 'Only 1.0 Nemetschek ALLPLAN files are supported'
+        nodes_index, nodes_coordinates = self.import_nodes(data)
+        self.nodes_table = self.nodes_table.reindex(nodes_index)
+        self.nodes_table.loc[nodes_index] = nodes_coordinates
 
-        line_type = None
-        for line in data:
-            if len(line) < 5:
-                pass
-            elif 'GL POLY' in line:
-                line_type = None
-            elif 'GP KNOT' in line:
-                line_type = 'node'
-            elif 'GF ELEM' in line:
-                line_type = 'element'
-            elif line[0:2] == 'QM':
-                self.import_reinforcement_line(line)
-            elif line[0:2] == 'QR':
-                pass
-            else:
-                if line_type == 'node':
-                    self.import_node_line(line)
-                elif line_type == 'element':
-                    self.import_element_line(line)
+        elements_data = np.array(self.import_elements(data))
+        elements_index = elements_data[:, 0]
+        elements_nodes = elements_data[:, 1:]
+        self.elements_table = self.elements_table.reindex(elements_index)
+        self.elements_table.loc[:] = tuple(elements_nodes)
+
+        reinforcement_data = self.import_reinforcement(data)
+        self.reinforcement_table = pd.DataFrame(data=reinforcement_data, columns=self.reinforcement_table.columns)
 
         self.calculate_element_centers()
-
-    def import_node_line(self, line: str):
-        split_line = [item for item in line.split(' ') if item != '']
-        self.nodes_table.loc[int(split_line[0])] = [float(item) for item in (split_line[1:4])]
-
-    def import_element_line(self, line: str):
-        split_line = [line[i * len(line) // 5: (i+1) * len(line) // 5] for i in range(5)]
-        self.elements_table.loc[int(split_line[0])] = [int(item) for item in (split_line[1:])]
-
-    def import_reinforcement_line(self, line: str):
-        split_line = [item for item in line.split(' ') if item != '']
-        self.reinforcement_table.loc[len(self.reinforcement_table)] = [float(item) for item in (split_line[3:12])]
 
     @staticmethod
     def import_polygons(data: str) -> List[np.array]:
@@ -80,27 +58,78 @@ class ReinforcementData:
         return return_polygons
 
     @Decorators.timed
+    def import_reinforcement(self, data: str) -> List[List[float]]:
+        reinforcement = re.findall(r'QM [\d\s\-.,]+\n', data)
+        reinforcement = list(map(self.strip_reinforcement_line, reinforcement))
+
+        return reinforcement
+
+    @Decorators.timed
+    def import_elements(self, data: str) -> List[List[int]]:
+        element_data_first_line = re.search(r'GF ELEM \d+', data)
+        n_elements = int(element_data_first_line.group().split(' ')[-1])
+
+        elements_data = data[element_data_first_line.end():].split('\n')[1:n_elements+1]
+        elements = list(map(self.strip_element_line, elements_data))
+
+        return elements
+
+    @Decorators.timed
+    def import_nodes(self, data: str) -> (List[int], np.array):
+        nodes_data_first_line = re.search(r'GP KNOT \d+', data)
+        n_nodes = int(nodes_data_first_line.group().split(' ')[-1])
+
+        nodes_data = data[nodes_data_first_line.end():].split('\n')[1:n_nodes+1]
+        nodes = np.array(list(map(self.strip_node_line, nodes_data)))
+
+        nodes_index = list(nodes[:, 0].astype(int))
+        nodes_coordinates = nodes[:, 1:]
+
+        return nodes_index, nodes_coordinates
+
+    @staticmethod
+    def strip_reinforcement_line(line: str) -> List[float]:
+        values = re.findall(r'-?\d+\.\d+', line)
+        values = list(map(float, values))
+
+        assert len(values) == 9, f'ASF Reinforcement import error\n{line}\n{values}'
+
+        return values
+
+    @staticmethod
+    def strip_element_line(line: str) -> List[int]:
+        split_line = [line[i * len(line) // 5: (i+1) * len(line) // 5] for i in range(5)]
+        values = list(map(int, split_line))
+
+        assert len(values) == 5, f'ASF Elements import error\n{line}\n{values}'
+
+        return values
+
+    @staticmethod
+    def strip_node_line(line: str) -> List[int]:
+        split_line = [item for item in line.split(' ') if item != '']
+        values = [int(split_line[0])]
+        values += list(map(float, split_line[1:]))
+
+        assert len(values) == 4, f'ASF Nodes import error\n{line}\n{values}'
+
+        return values
+
+    @Decorators.timed
     def calculate_element_centers(self):
-        elements_centers = pd.DataFrame(columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z'))
+        coordinates = list(map(self.get_coordinates, self.elements_table.values))
+        element_centers = list(map(self.get_mean, coordinates))
 
-        for i in self.elements_table.index:
-            element_nodes = self.elements_table.loc[i]
-            n_nodes = len([node for node in element_nodes if node > 0])
+        elements_centers_table = pd.DataFrame(data=element_centers, index=self.elements_table.index,
+                                              columns=('Element_center_X', 'Element_center_Y', 'Element_center_Z'))
 
-            element_center_x = 0
-            element_center_y = 0
-            element_center_z = 0
+        self.elements_table = pd.concat([self.elements_table, elements_centers_table], axis=1)
 
-            for node in element_nodes:
-                if node == 0:
-                    continue
+    def get_coordinates(self, nodes) -> np.array:
+        nodes = nodes[nodes != 0]
+        coordinates = self.nodes_table.loc[nodes, ['X', 'Y', 'Z']].values.astype(float)
+        return coordinates
 
-                element_center_x += self.nodes_table.loc[node, 'X']
-                element_center_y += self.nodes_table.loc[node, 'Y']
-                element_center_z += self.nodes_table.loc[node, 'Z']
-
-            elements_centers.loc[i] = (element_center_x / n_nodes,
-                                       element_center_y / n_nodes,
-                                       element_center_z / n_nodes)
-
-        self.elements_table = pd.concat([self.elements_table, elements_centers], axis=1)
+    @staticmethod
+    def get_mean(array) -> np.array:
+        return np.mean(array, axis=0)

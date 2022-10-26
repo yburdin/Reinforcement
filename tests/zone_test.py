@@ -208,6 +208,8 @@ class ZoneTest(unittest.TestCase):
             zone.background_reinforcement = {'diameter': 10, 'step': 200}
             zone.max_intensity = 3.93 + 1.40
 
+            zone.reinforcement_direction = 'X'
+
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 0], -0.05, delta=0.01)
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 1], -1, delta=0.1)
 
@@ -234,6 +236,8 @@ class ZoneTest(unittest.TestCase):
             zone.background_reinforcement_intensity = 3.93
             zone.background_reinforcement = {'diameter': 10, 'step': 200}
             zone.max_intensity = 3.93 + 1.40
+
+            zone.reinforcement_direction = 'X'
 
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 0], 0.15, delta=0.01)
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 1], -1, delta=0.1)
@@ -262,6 +266,8 @@ class ZoneTest(unittest.TestCase):
             zone.background_reinforcement = {'diameter': 10, 'step': 200}
             zone.max_intensity = 3.93 + 1.40
 
+            zone.reinforcement_direction = 'X'
+
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 0], 0.15, delta=0.01)
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 1], 2, delta=0.1)
 
@@ -289,6 +295,8 @@ class ZoneTest(unittest.TestCase):
             zone.background_reinforcement = {'diameter': 6, 'step': 200}
             zone.max_intensity = 4.61
 
+            zone.reinforcement_direction = 'X'
+
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 0], 1.936, delta=0.01)
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 1], 0.992, delta=0.01)
 
@@ -315,6 +323,8 @@ class ZoneTest(unittest.TestCase):
             zone.background_reinforcement_intensity = 1.413716694115407
             zone.background_reinforcement = {'diameter': 6, 'step': 200}
             zone.max_intensity = 1.63
+
+            zone.reinforcement_direction = 'X'
 
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 0], -10.856308, delta=0.01)
             self.assertAlmostEqual(zone.bounding_rectangle_adjusted[0, 1], -14.248188, delta=0.01)

@@ -180,7 +180,7 @@ class App:
 if __name__ == '__main__':
     root = Tk()
     app = App(root)
-    root.title('Reinpycement 0.6')
+    root.title('Reinpycement 0.7')
     if 'icon.ico' in os.listdir():
         root.iconbitmap("icon.ico")
 

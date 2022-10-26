@@ -1,6 +1,7 @@
 from structures.reinforcement_scheme import ReinforcementScheme
 from structures.reinforcement_scheme import ReinforcementZone
 from numpy.random import randint
+from decorators import Decorators
 import ezdxf
 
 
@@ -9,6 +10,7 @@ class Drawer:
         pass
 
     @staticmethod
+    @Decorators.timed
     def dxf_draw_zones(scheme: ReinforcementScheme, save_path: str):
         doc = ezdxf.new()
         msp = doc.modelspace()
@@ -19,22 +21,23 @@ class Drawer:
 
         doc.layers.add('POLYGONS', color=randint(10, 230))
         for poly in scheme.polygons:
-            for i in range(1, len(poly)):
-                msp.add_line(tuple(poly[i-1][:2]), tuple(poly[i][:2]), dxfattribs={'layer': 'POLYGONS'})
-            msp.add_line(tuple(poly[-1][:2]), tuple(poly[0][:2]), dxfattribs={'layer': 'POLYGONS'})
+            points_poly = [tuple(point[:2]) for point in poly]
+            points_poly += [points_poly[0]]
+            msp.add_polyline2d(points_poly, dxfattribs={'layer': 'POLYGONS'})
 
         for location in scheme.reinforcement_zones:
             doc.layers.add(location, color=randint(10, 230))
             doc.layers.add(f'TEXT_{location}', color=randint(10, 230))
 
             for zone in scheme.reinforcement_zones[location]:  # type: ReinforcementZone
-                points = zone.bounding_rectangle
-                points_adj = zone.bounding_rectangle_adjusted
-                for i in range(1, len(points)):
-                    msp.add_line(tuple(points[i-1]), tuple(points[i]), dxfattribs={'layer': location, 'color': 9})
-                    msp.add_line(tuple(points_adj[i-1]), tuple(points_adj[i]), dxfattribs={'layer': location})
-                msp.add_line(tuple(points[-1]), tuple(points[0]), dxfattribs={'layer': location, 'color': 9})
-                msp.add_line(tuple(points_adj[-1]), tuple(points_adj[0]), dxfattribs={'layer': location})
+                points = [tuple(point) for point in zone.bounding_rectangle]
+                points += [points[0]]
+
+                points_adj = [tuple(point) for point in zone.bounding_rectangle_adjusted]
+                points_adj += [points_adj[0]]
+
+                msp.add_polyline2d(points, dxfattribs={'layer': location, 'color': 9})
+                msp.add_polyline2d(points_adj, dxfattribs={'layer': location})
 
                 zone_diameter = zone.additional_reinforcement['diameter']
                 zone_step = zone.additional_reinforcement['step']

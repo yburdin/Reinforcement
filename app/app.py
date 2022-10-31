@@ -48,14 +48,7 @@ class App:
                 except FileNotFoundError:
                     raise AssertionError('JSON file not found')
 
-                assert 'path_to_asf_folder' in settings, 'Path to asf folder not found in JSON file'
-                assert 'path_to_txt_file' in settings, 'Path to txt file not found in JSON file'
-                assert 'path_to_csv_file' in settings, 'Path to csv file not found in JSON file'
-                assert 'path_to_dxf_output_folder' in settings, 'Path to dxf folder not found in JSON file'
-                assert 'background_reinforcement_intensity' in settings, 'Background reinforcement not ' \
-                                                                         'found in JSON file'
-                assert 'reinforcement_groups' in settings, 'Reinforcement groups not found in JSON file'
-
+                self.check_settings(settings)
                 self.settings = settings
 
                 self.place_settings_labels(self.master, self.settings)
@@ -100,10 +93,7 @@ class App:
                                                                   intensity=background_reinforcement_intensity)
 
                 reinforcement_scheme.load_scad_data(scad_data, group)
-                try:
-                    reinforcement_scheme.load_anchorage_lengths(self.settings['path_to_csv_file'])
-                except FileNotFoundError:
-                    raise AssertionError('CSV file not found')
+                reinforcement_scheme.load_anchorage_lengths(self.settings['path_to_csv_file'])
                 reinforcement_scheme.make_combined_table()
 
                 for loc in ['Top_X', 'Top_Y', 'Bot_X', 'Bot_Y']:
@@ -119,6 +109,29 @@ class App:
 
         except AssertionError as e:
             tkinter.messagebox.showerror(title=None, message=e)
+
+    @staticmethod
+    def check_settings(settings: dict):
+        assert 'path_to_asf_folder' in settings, 'Path to asf folder not found in JSON file'
+        assert 'path_to_txt_file' in settings, 'Path to txt file not found in JSON file'
+        assert 'path_to_csv_file' in settings, 'Path to csv file not found in JSON file'
+        assert 'path_to_dxf_output_folder' in settings, 'Path to dxf folder not found in JSON file'
+        assert 'background_reinforcement_intensity' in settings, 'Background reinforcement not ' \
+                                                                 'found in JSON file'
+        assert 'reinforcement_groups' in settings, 'Reinforcement groups not found in JSON file'
+
+        with open(settings['path_to_csv_file'], encoding='utf-8') as f:
+            csv_data = f.read()
+
+        csv_data = [row.split(';') for row in csv_data.split('\n')]
+        csv_diameters = list(map(int, [row[0] for row in csv_data[1:]]))
+
+        if 'possible_diameters' in settings:
+            for diameter in settings['possible_diameters']:
+                assert int(diameter) in csv_diameters, f'd{diameter} is in possible diameters but not in csv file'
+        else:
+            for diameter in [6, 8, 10, 12, 14, 16, 18, 20, 22, 25, 28, 32, 36, 40, 45, 50, 55, 60, 70, 80]:
+                assert diameter in csv_diameters, f'd{diameter} is in possible diameters but not in csv file'
 
     def get_asf_files(self) -> List[str]:
         asf_folder = self.settings['path_to_asf_folder']
@@ -180,7 +193,7 @@ class App:
 if __name__ == '__main__':
     root = Tk()
     app = App(root)
-    root.title('Reinpycement 0.7')
+    root.title('Reinpycement 0.8')
     if 'icon.ico' in os.listdir():
         root.iconbitmap("icon.ico")
 

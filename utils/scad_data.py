@@ -5,6 +5,9 @@ import numpy as np
 import re
 
 
+scad_parser_regex = r'\w\s\d=\".:\-/,+\';'
+
+
 class SCADData:
     def __init__(self):
         self.nodes_table = None
@@ -36,7 +39,7 @@ class SCADData:
     def import_force_directions_from_txt_data(self, data: str) -> pd.DataFrame:
         force_direction_table = pd.DataFrame(columns=('Rotation_type', 'Direction'))
 
-        force_axis = re.search(r'\(33/[\s\w=:\-/.+",]+\)', data).group().replace('\n', ' ')
+        force_axis = re.search(rf'\(33/[{scad_parser_regex}]+\)', data).group().replace('\n', ' ')
         force_axis = force_axis.split('/')
         force_axis = [line.replace('  ', ' ').strip() for line in force_axis if 'EX' in line or 'EY' in line]
 
@@ -64,12 +67,12 @@ class SCADData:
     def import_reinforcement_groups_from_txt_data(self, data: str) -> dict:
         reinforcement_groups_dict = {}
 
-        reinforcement_groups = re.search(r'\(53/[\w\s\d=\".:\-/,]+\)', data).group().replace('\n', ' ')
+        reinforcement_groups = re.search(rf'\(53/[{scad_parser_regex}]+\)', data).group().replace('\n', ' ')
         reinforcement_groups = reinforcement_groups.split('/')
 
         for line in reinforcement_groups:
             if 'Name' in line:
-                name = re.search(r'Name="[\w\s\d.,\-+]+"', line).group().split('"')[1]
+                name = re.search(rf'Name="[{scad_parser_regex}]+"', line).group().split('"')[1]
                 elements = line.split(':')[-1].replace('  ', ' ')
 
                 element_indices = self.get_element_list_from_string(elements)
@@ -82,7 +85,7 @@ class SCADData:
         elements_table = pd.DataFrame(columns=('Element_type', 'Stiffness'))
         nodes_series = pd.Series(name='Nodes', dtype=object)
 
-        elements_data = re.search(r'\(1/[\d\s\w:/]+\)', data).group().replace('\n', ' ')
+        elements_data = re.search(rf'\(1/[{scad_parser_regex}]+\)', data).group().replace('\n', ' ')
         while '  ' in elements_data:
             elements_data = elements_data.replace('  ', ' ')
 
@@ -132,7 +135,7 @@ class SCADData:
     def import_nodes_form_txt_data(self, data: str) -> pd.DataFrame:
         nodes_table = pd.DataFrame(columns=('X', 'Y', 'Z'))
 
-        nodes_data = re.search(r'\(4/[\d\s\w:/".,\-]+\)', data).group().replace('\n', ' ')
+        nodes_data = re.search(rf'\(4/[{scad_parser_regex}]+\)', data).group().replace('\n', ' ')
         while '  ' in nodes_data:
             nodes_data = nodes_data.replace('  ', ' ')
         nodes_data = nodes_data.replace('(4/', '').replace(')', '').split('/')
